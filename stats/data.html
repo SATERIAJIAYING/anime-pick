@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>数据下载 · AnimePick 统计</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="stats.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="../index.html">
+      <span class="brand-icon">🎬</span>
+      <span class="brand-text">Anime<span class="grad">Pick</span></span>
+      <span class="brand-jp">アニメ・ピック</span>
+    </a>
+    <nav class="nav-links">
+      <a href="../index.html">开始测试</a>
+      <a href="../discover.html">💘 发现</a>
+      <a href="../methods.html">方法</a>
+      <a href="index.html">统计</a>
+      <a href="https://sateriajiaying.github.io/anime-gallery/" target="_blank" rel="noopener">🌸 画廊</a>
+    </nav>
+  </header>
+
+  <main class="stats-wrap">
+    <div class="stats-head">
+      <p class="kicker">✦ SUPPLEMENTARY DATA ✦</p>
+      <h1>数据下载</h1>
+      <p class="sub">论文式补充数据:各统计图背后的原始数据,可下载 JSON / CSV 自行复现或二次分析。</p>
+    </div>
+    <div class="back-row">
+      <a href="index.html">统计中心</a>
+      <a href="map.html">口味地图</a>
+      <a href="pairs.html">意外动画对</a>
+      <a href="reputation.html">口碑实验室</a>
+      <a href="groups.html">64 类观众群</a>
+      <a href="eras.html">年代与载体</a>
+      <a href="meta.html">数据自画像</a>
+      <a href="data.html">数据下载</a>
+
+      <a href="data.html" class="on">数据下载</a>
+    </div>
+
+    <div class="glossary">
+      <b>说明:</b>CSV 采用 UTF-8 带 BOM(Excel 直接打开不乱码),嵌套字段(如标签列表)以 <code>|</code> 分隔。
+      所有数据均来自 Bangumi 公开数据,仅包含聚合统计,不含任何单个用户的标识;可以自由用于非商业分析并注明出处。
+    </div>
+
+    <div class="mod">
+      <div class="mod-title"><h2>汇总下载</h2><span class="desc">一个文件包含本页全部统计模块</span></div>
+      <div id="bulk"></div>
+    </div>
+
+    <div class="mod">
+      <div class="mod-title"><h2>各模块原始数据</h2><span class="desc">对应统计子页的每一张图/每一个榜单</span></div>
+      <div class="dl-grid" id="dl-grid"></div>
+    </div>
+
+    <div class="mod">
+      <div class="mod-title"><h2>模型与嵌入文件</h2><span class="desc">直接链接到站点数据文件(浏览器推理所用,可本地复现打分)</span></div>
+      <div id="model-files"></div>
+    </div>
+  </main>
+
+  <script src="stats.js"></script>
+  <script>
+    STATS.then((s) => {
+      const BOM = "\ufeff";
+      const dl = (name, text, mime) => {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([text], { type: mime }));
+        a.download = name;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      };
+      const json = (name, obj) => dl(name, JSON.stringify(obj, null, 1), "application/json");
+      const csv = (name, rows) => {
+        if (!rows.length) return;
+        const keys = Object.keys(rows[0]);
+        const esc = (v) => {
+          if (v === null || v === undefined) return "";
+          if (typeof v === "object") return JSON.stringify(v).replace(/"/g, "'");
+          return String(v);
+        };
+        const lines = [keys.join(","),
+          ...rows.map((r) => keys.map((k) => `"${esc(r[k]).replace(/"/g, '""')}"`).join(","))];
+        dl(name, BOM + lines.join("\n"), "text/csv;charset=utf-8");
+      };
+
+      // 汇总
+      const bulk = document.getElementById("bulk");
+      const mkBtn = (label, fn) => {
+        const b = el("button", "chip", label);
+        b.onclick = fn;
+        return b;
+      };
+      bulk.appendChild(mkBtn("⬇️ 下载 stats.json(全部模块)", () => json("stats.json", s)));
+      bulk.appendChild(mkBtn("⬇️ 下载 item 元数据 items.json", () =>
+        fetch("../data/items.json").then((r) => r.json()).then((d) => json("items.json", d))));
+
+      // 模块表
+      const modules = [
+        { name: "评分分布", page: "meta", desc: "1-10 分各档条数", json: s.ratingDist,
+          rows: () => Object.entries(s.ratingDist).map(([k, v]) => ({ score: k, count: v })) },
+        { name: "TOP 标签", page: "meta", desc: "标签 × 出现系列数", json: s.topTags,
+          rows: () => s.topTags.map((t) => ({ tag: t[0], count: t[1] })) },
+        { name: "意外动画对(高亮 TOP24)", page: "pairs", desc: "低标签重叠 × 高观众重叠", json: s.pairs,
+          rows: () => s.pairs.map((p) => ({
+            a: p.a.name, b: p.b.name, userOverlap: p.userOverlap, tagOverlap: p.tagOverlap,
+            sharedTags: (p.sharedTags || []).join("|"), sharedLovers: p.sharedLovers, surprise: p.surprise,
+          })) },
+        { name: "意外对全量点云(10,260 对)", page: "pairs", desc: "散点图灰色背景", json: s.pairCloud,
+          rows: () => s.pairCloud.map((c) => ({ userOverlap: c[0], tagOverlap: c[1] })) },
+        { name: "反向意外对", page: "pairs", desc: "标签雷同 × 观众各爱各的", json: s.reversePairs,
+          rows: () => s.reversePairs.map((p) => ({
+            a: p.a, b: p.b, tagOverlap: p.tagOverlap, userOverlap: p.userOverlap,
+            sharedTags: (p.sharedTags || []).join("|"), sharedLovers: p.sharedLovers,
+          })) },
+        { name: "口碑全量(均分/超喜欢率/争议度等)", page: "reputation", desc: "散点图与榜单的底表", json: s.reputation,
+          rows: () => s.reputation.map((x) => ({
+            id: x.id, name: x.name, n: x.n, mean: x.mean, std: x.std, superRate: x.superRate,
+            hateRate: x.hateRate, bimodality: x.bimodality, pop: x.pop, popPct: x.popPct,
+            superPct: x.superPct, year: x.year, platform: x.platform,
+          })) },
+        { name: "爱恨分明榜", page: "reputation", desc: "两极分化 TOP15", json: s.loveHate,
+          rows: () => s.loveHate },
+        { name: "64 类观众群", page: "groups", desc: "规模/心头好/偏爱与无感标签(lift)", json: s.groups,
+          rows: () => s.groups.map((g) => ({
+            k: g.k, name: g.name, size: g.size,
+            loves: (g.loves || []).join("|"),
+            diffTags: (g.diffTags || []).map((d) => `${d.tag}:${d.lift}`).join("|"),
+            avoidTags: (g.avoidTags || []).map((d) => `${d.tag}:${d.lift}`).join("|"),
+          })) },
+        { name: "年代偏见", page: "eras", desc: "各十年均值/超喜欢率/争议度", json: s.eras, rows: () => s.eras },
+        { name: "载体差异", page: "eras", desc: "TV/剧场版/OVA 等", json: s.platforms, rows: () => s.platforms },
+        { name: "系列巅峰", page: "eras", desc: "长系列收藏顶点", json: s.entries, rows: () => s.entries },
+        { name: "用户评分人格", page: "meta", desc: "每人平均分/标准差", json: s.personalities, rows: () => s.personalities },
+        { name: "口味枢纽", page: "map", desc: "共现图度数", json: s.hubs, rows: () => s.hubs },
+        { name: "系列宇宙规模", page: "meta", desc: "系列 × 成员数", json: s.franchiseSizes, rows: () => s.franchiseSizes },
+        { name: "口味地图 2D 投影", page: "map", desc: "t-SNE 坐标(条目+观众群)", json: s.map,
+          rows: () => s.map.items.map((p) => ({
+            id: p.id, name: p.name, x: p.x, y: p.y, cluster: p.cluster, proto: p.proto, pop: p.pop,
+          })) },
+      ];
+      const grid = document.getElementById("dl-grid");
+      for (const m of modules) {
+        const card = el("div", "dl-card");
+        card.appendChild(el("div", "dl-name", m.name));
+        card.appendChild(el("div", "dl-desc", m.desc + " · 见「" + m.page + "」页"));
+        const btns = el("div", "dl-btns");
+        btns.appendChild(mkBtn("JSON", () => json(m.name.replace(/[\/\\:]/g, "_") + ".json", m.json)));
+        btns.appendChild(mkBtn("CSV", () => csv(m.name.replace(/[\/\\:]/g, "_") + ".csv", m.rows())));
+        card.appendChild(btns);
+        grid.appendChild(card);
+      }
+
+      // 模型与嵌入文件直链
+      const mf = document.getElementById("model-files");
+      const files = [
+        ["model.json", "模型元数据(维度/簇数/锚点/量化参数)"],
+        ["embeddings.bin", "条目嵌入(int8,1559×64,BPR)"],
+        ["embeddings_picker.bin", "提问嵌入(int8,ALS)"],
+        ["prototypes.bin", "64 个品味原型(int8)"],
+        ["co_loved.json", "超喜欢共现图"],
+        ["group_names.json", "观众群名称"],
+        ["comments.json", "同好短评"],
+        ["stats.json", "本页全部统计"],
+      ];
+      for (const [fn, desc] of files) {
+        const row = el("div", "list-row");
+        row.appendChild(el("span", "lname", fn));
+        row.appendChild(el("span", "lmeta", desc));
+        const a = el("a", "chip", "⬇️ 下载");
+        a.href = "../data/" + fn;
+        a.download = fn;
+        row.appendChild(a);
+        mf.appendChild(row);
+      }
+    });
+  </script>
+</body>
+</html>

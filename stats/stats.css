@@ -20,6 +20,16 @@
   font-size: 12.5px; color: var(--ink-dim); line-height: 2;
 }
 .glossary b { color: var(--gold); font-weight: 700; }
+.dl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.dl-card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;
+}
+.dl-name { font-weight: 900; font-size: 14.5px; }
+.dl-desc { font-size: 12px; color: var(--ink-faint); line-height: 1.7; }
+.dl-btns { display: flex; gap: 8px; margin-top: auto; }
+.dl-btns .chip { font-size: 12px; }
+.list-row a.chip { text-decoration: none; }
 .mod-title { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 0 0 14px; }
 .mod-title h2 { margin: 0; font-size: 20px; font-weight: 900; }
 .mod-title .desc { color: var(--ink-faint); font-size: 12.5px; }

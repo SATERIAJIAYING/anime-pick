@@ -300,6 +300,12 @@ a { color: inherit; text-decoration: none; }
   width: min(1120px, calc(100% - 32px)); margin: 46px auto 0;
   color: var(--ink-faint); font-size: 12.5px; text-align: center; line-height: 1.8;
 }
+.site-foot {
+  width: min(1120px, calc(100% - 32px)); margin: 26px auto 0;
+  padding: 18px 0 30px; border-top: 1px solid var(--line);
+  text-align: center; color: var(--ink-faint); font-size: 13px; line-height: 1.8;
+}
+.site-foot .link { margin: 0 2px; }
 
 @media (max-width: 640px) {
   .brand-jp { display: none; }

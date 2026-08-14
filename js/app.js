@@ -568,6 +568,55 @@
     }
   }
 
+  /* ---------------- Bangumi 连通性体检(首页提示) ---------------- */
+  function checkApi() {
+    return new Promise((res) => {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 6000);
+      fetch("https://api.bgm.tv/v0/subjects/265", { signal: ctrl.signal })
+        .then((r) => { clearTimeout(t); res(r.ok); })
+        .catch(() => { clearTimeout(t); res(false); });
+    });
+  }
+  function checkImages() {
+    return new Promise((res) => {
+      const img = new Image();
+      const t = setTimeout(() => res(false), 6000);
+      img.onload = () => { clearTimeout(t); res(true); };
+      img.onerror = () => { clearTimeout(t); res(false); };
+      img.src = "https://lain.bgm.tv/pic/cover/l/e5/69/265_Z5Uou.jpg";
+    });
+  }
+  async function healthCheck() {
+    // 调试锚点:强制展示「双端不可用」提示(验证 UI)
+    if (location.hash === "#api-off") {
+      const banner = $("#api-banner");
+      $("#api-banner-msg").textContent =
+        "⚠️ 无法连接 Bangumi API、无法加载 Bangumi 图床。核心推荐不受影响(数据与模型都在浏览器本地),但番剧封面会显示占位图,「发现」页的在线补图也不可用。";
+      banner.hidden = false;
+      $("#api-banner-x").onclick = () => { banner.hidden = true; };
+      return;
+    }
+    const [apiOk, imgOk] = await Promise.all([checkApi(), checkImages()]);
+    const problems = [];
+    if (!apiOk) problems.push("无法连接 Bangumi API");
+    if (!imgOk) problems.push("无法加载 Bangumi 图床");
+    if (!problems.length) return;
+    const banner = $("#api-banner");
+    const msg = $("#api-banner-msg");
+    let impact;
+    if (!apiOk && !imgOk) {
+      impact = "核心推荐不受影响(数据与模型都在浏览器本地),但番剧封面会显示占位图,「发现」页的在线补图也不可用。";
+    } else if (!apiOk) {
+      impact = "核心推荐不受影响(数据与模型都在浏览器本地),但部分封面补取与在线搜索可能不可用。";
+    } else {
+      impact = "核心推荐不受影响,但番剧封面会显示占位图。";
+    }
+    msg.textContent = `⚠️ ${problems.join("、")}。${impact}`;
+    banner.hidden = false;
+    $("#api-banner-x").onclick = () => { banner.hidden = true; };
+  }
+
   /* ---------------- boot ---------------- */
   async function boot() {
     try {
@@ -580,6 +629,7 @@
     }
     renderAnchors();
     bindQuiz();
+    healthCheck();
     $("#restart").onclick = () => location.reload();
     // 首页开始按钮:进入锚点屏
     $("#start-btn").onclick = () => {

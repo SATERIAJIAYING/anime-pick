@@ -60,7 +60,7 @@
     <div class="mod">
       <div class="mod-title">
         <h2>② 标签几乎一样,观众却各爱各的</h2>
-        <span class="desc">指标:标签 Jaccard ≥ 0.5 但深爱者 Jaccard ≤ 0.08——标签解释不了的口味分歧。</span>
+        <span class="desc">指标:标签 Jaccard ≥ 0.5 但深爱者 Jaccard ≤ 0.08。每行双条:紫色 = 标签重叠(很高),粉色 = 观众重叠(几乎看不见)——标签解释不了的口味分歧。</span>
       </div>
       <div id="rev-list"></div>
       <p class="note">典型:京阿尼的《吹响吧!上低音号》与《境界的彼方》,标签高度相似,深爱者却几乎不重叠——说明「标签」之外还有看不见的隐藏维度(叙事气质、时代滤镜……)。</p>
@@ -110,10 +110,30 @@
         (p) => p.surprise,
         (p) => `${p.a.name} × ${p.b.name}`,
         tagMeta);
-      barList(document.getElementById("rev-list"), s.reversePairs,
-        (p) => (1 - p.userOverlap),
-        (p) => `${p.a} × ${p.b}`,
-        (p) => `共享标签:${p.sharedTags.join("、")} · 观众重叠仅 ${p.userOverlap} · 共同 ${p.sharedLovers} 人`);
+      {
+        const box = document.getElementById("rev-list");
+        box.textContent = "";
+        for (const p of s.reversePairs) {
+          const row = el("div", "list-row");
+          row.appendChild(el("span", "lname", `${p.a} × ${p.b}`));
+          const t1 = el("span", "lbar-track");
+          const b1 = el("span", "lbar");
+          b1.style.width = `${(p.tagOverlap * 100).toFixed(1)}%`;
+          b1.style.background = "#9d7bff";
+          t1.appendChild(b1);
+          row.appendChild(t1);
+          const t2 = el("span", "lbar-track");
+          const b2 = el("span", "lbar");
+          b2.style.width = `${Math.max(2, (p.userOverlap * 100).toFixed(1))}%`;
+          b2.style.background = "#ff6fb5";
+          t2.appendChild(b2);
+          row.appendChild(t2);
+          const extra = p.sharedTagCount > 3 ? ` · 还有 ${p.sharedTagCount - 3} 个标签也相同` : "";
+          row.appendChild(el("span", "lmeta",
+            `🏷️标签重叠 ${(p.tagOverlap * 100).toFixed(0)}% · 👥观众重叠仅 ${(p.userOverlap * 100).toFixed(1)}%${extra}`));
+          box.appendChild(row);
+        }
+      }
     });
   </script>
 <footer class="site-foot">

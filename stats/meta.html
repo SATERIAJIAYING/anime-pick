@@ -54,9 +54,10 @@
     <div class="mod">
       <div class="mod-title">
         <h2>用户评分人格</h2>
-        <span class="desc">横轴每人平均分,纵轴每人评分标准差(≥8 条评分的用户)。右下=「打分又高又集中」的慷慨党,左上=「又低又飘」的严格党。</span>
+        <span class="desc">横轴每人平均分,纵轴每人评分标准差(≥8 条评分的用户)。点色 = 局部密度。右下=「打分又高又集中」的慷慨党,左上=「又低又飘」的严格党。</span>
       </div>
       <div class="chart-box tall"><canvas id="c-person"></canvas></div>
+      <div class="dens-legend"><span>密度低</span><i></i><span>密度高</span></div>
     </div>
 
     <div class="mod">
@@ -79,10 +80,11 @@
         color: PALETTE[3], tooltip: (c) => `${c.raw.toLocaleString()} 条`,
       });
       mkScatter("c-person", s.personalities.map((p) => ({
-        x: p.mean, y: p.std, label: `${p.n} 条评分 · 均值 ${p.mean} · 标准差 ${p.std}`,
+        x: p.mean, y: p.std, d: p.d, label: `${p.n} 条评分 · 均值 ${p.mean} · 标准差 ${p.std}`,
       })), {
-        xTitle: "个人平均分", yTitle: "个人评分标准差", radius: 2.5,
+        xTitle: "个人平均分", yTitle: "个人评分标准差", radius: 2.6,
         tooltip: (c) => c.raw.label,
+        colorFn: (p) => densityColor(p.d),
       });
       mkBar("c-tags", s.topTags.map((t) => t[0]), s.topTags.map((t) => t[1]), {
         horizontal: true, color: PALETTE[2],

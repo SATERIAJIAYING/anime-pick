@@ -84,6 +84,7 @@ a { color: inherit; text-decoration: none; }
   color: var(--ink-dim); font-size: 13.5px; line-height: 1.8;
 }
 .api-banner span { flex: 1; }
+.api-banner[hidden] { display: none; }
 .api-banner button {
   flex: none; width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
   background: none; border: 1px solid var(--line); color: var(--ink-faint);

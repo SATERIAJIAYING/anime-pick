@@ -43,7 +43,7 @@
       <a href="meta.html">数据自画像</a>
     </div>
 
-    <div class="glossary"><b>名词解释:</b><b>平均分</b> = 该年代动画的评分均值(按评分人数加权)。<b>超喜欢率</b> = 9-10 分占比。<b>怀旧溢价</b> = 老番平均分系统性偏高——部分原因是「能活到今天还被补番的老作品」本身经过了时间筛选(幸存者偏差),并非年代本身更好。<b>入坑点</b> = 系列内被最多人收藏的那一作。</div>
+    <div class="glossary"><b>名词解释:</b><b>平均分</b> = 该年代动画的评分均值(按评分人数加权)。<b>超喜欢率</b> = 9-10 分占比。<b>怀旧溢价</b> = 老番平均分系统性偏高——部分原因是「能活到今天还被补番的老作品」本身经过了时间筛选(幸存者偏差),并非年代本身更好。<b>入坑点</b> = 长系列(≥5 部)内被最多人收藏的那一作及其占全系列收藏的比例——回答「补老系列该从哪部开始看」。名字与系列名相同时表示「正传即入坑点」;像《无职转生》从第三季入坑、《链锯人》从剧场版入坑,则是更有意思的反例。</div>
 
     <div class="mod">
       <div class="mod-title">
@@ -73,7 +73,7 @@
     <div class="mod">
       <div class="mod-title">
         <h2>入坑点</h2>
-        <span class="desc">多成员系列里,被收藏最多的那一部——大家都是从哪部「入坑」的。</span>
+        <span class="desc">≥5 部的长系列里,被收藏最多的那一部(占全系列收藏的比例)——大家都是从哪部「入坑」的。名字相同时说明「正传即入坑点」。</span>
       </div>
       <div id="entry-list"></div>
     </div>
@@ -93,8 +93,11 @@
         color: PALETTE[4], tooltip: (c) => `均分 ${c.raw} · ${s.platforms[c.dataIndex].n} 条评分`,
       });
       barList(document.getElementById("entry-list"), s.entries,
-        (e) => e.count, (e) => `${e.franchise} → ${e.entry}`,
-        (e) => `${e.count} 人收藏`);
+        (e) => e.count,
+        (e) => e.franchise === e.entry
+          ? `《${e.franchise}》(正传即入坑点)`
+          : `《${e.franchise}》 → 《${e.entry}》`,
+        (e) => `占全系列收藏 ${e.share}% · ${e.members} 部 · ${e.count} 人收藏`);
     });
   </script>
 </body>

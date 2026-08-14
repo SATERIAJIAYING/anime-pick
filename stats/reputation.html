@@ -61,17 +61,21 @@
     <div class="mod">
       <div class="mod-title">
         <h2>评分 × 超喜欢率 象限</h2>
-        <span class="desc">横轴平均分,纵轴「给 9-10 分的人占比」。右上=公认神作;右下=好评但不动心;左上=小众邪典。</span>
+        <span class="desc">横轴平均分,纵轴「给 9-10 分的人占比」。点色 = 局部密度(重叠越多的区域越亮)。右上=公认神作;右下=好评但不动心;左上=小众邪典。</span>
       </div>
       <div class="chart-box tall"><canvas id="c-quad"></canvas></div>
+<div class="dens-legend"><span>密度低</span><i></i><span>密度高</span></div>
+
     </div>
 
     <div class="mod">
       <div class="mod-title">
         <h2>热度溢价</h2>
-        <span class="desc">横轴全站热度(对数),纵轴平均分。左上=冷门高分「遗珠」;右下=热门低分「德不配位」。</span>
+        <span class="desc">横轴全站热度(对数),纵轴平均分。点色 = 局部密度。左上=冷门高分「遗珠」;右下=热门低分「德不配位」。</span>
       </div>
       <div class="chart-box tall"><canvas id="c-heat"></canvas></div>
+<div class="dens-legend"><span>密度低</span><i></i><span>密度高</span></div>
+
     </div>
 
     <div class="mod">
@@ -119,18 +123,22 @@
       }
       const rep = s.reputation.filter((x) => x.n >= 30);
       mkScatter("c-quad", rep.map((x) => ({
-        x: x.mean, y: x.superRate,
+        x: x.mean, y: x.superRate, d: x.dQuad,
         label: `${x.name}\n均分 ${x.mean} · 超喜欢率 ${(x.superRate * 100).toFixed(1)}% · ${x.n} 人评`,
       })), {
         xTitle: "平均分", yTitle: "超喜欢率(9-10分占比)",
         tooltip: (c) => c.raw.label,
+        colorFn: (p) => densityColor(p.d),
+        radius: 4.5,
       });
       mkScatter("c-heat", rep.map((x) => ({
-        x: Math.log10(x.pop + 1), y: x.mean,
+        x: Math.log10(x.pop + 1), y: x.mean, d: x.dHeat,
         label: `${x.name}\n热度 ${x.pop} · 均分 ${x.mean} · 超喜欢率 ${(x.superRate * 100).toFixed(1)}%`,
       })), {
         xTitle: "全站热度 log10", yTitle: "平均分",
         tooltip: (c) => c.raw.label,
+        colorFn: (p) => densityColor(p.d),
+        radius: 4.5,
       });
       barList(document.getElementById("dull-list"), s.dull,
         (x) => (0.2 - x.superRate),

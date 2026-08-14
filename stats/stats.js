@@ -49,6 +49,29 @@ function mkBar(id, labels, values, opts = {}) {
   });
 }
 
+const DENS_STOPS = [
+  [0.0, [80, 88, 150]],
+  [0.35, [157, 123, 255]],
+  [0.7, [255, 201, 107]],
+  [1.0, [255, 154, 213]],
+];
+function densityColor(d) {
+  const t = Math.max(0, Math.min(1, d || 0));
+  for (let i = 1; i < DENS_STOPS.length; i++) {
+    if (t <= DENS_STOPS[i][0]) {
+      const [t0, c0] = DENS_STOPS[i - 1];
+      const [t1, c1] = DENS_STOPS[i];
+      const k = (t - t0) / (t1 - t0);
+      const r = Math.round(c0[0] + (c1[0] - c0[0]) * k);
+      const g = Math.round(c0[1] + (c1[1] - c0[1]) * k);
+      const b = Math.round(c0[2] + (c1[2] - c0[2]) * k);
+      return `rgb(${r},${g},${b})`;
+    }
+  }
+  const c = DENS_STOPS[DENS_STOPS.length - 1][1];
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+
 function mkScatter(id, points, opts = {}) {
   const ctx = document.getElementById(id);
   if (!ctx) return null;
@@ -57,9 +80,13 @@ function mkScatter(id, points, opts = {}) {
     data: {
       datasets: [{
         data: points,
-        backgroundColor: opts.pointColor || (() => PALETTE[0]),
+        backgroundColor: opts.colorFn
+          ? (c) => opts.colorFn(c.raw)
+          : (opts.pointColor || (() => PALETTE[0])),
         pointRadius: opts.radius || 4,
         pointHoverRadius: 7,
+        borderColor: opts.borderColor || "rgba(255,255,255,.35)",
+        borderWidth: 0.4,
       }],
     },
     options: {

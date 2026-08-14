@@ -30,6 +30,14 @@
 .dl-btns { display: flex; gap: 8px; margin-top: auto; }
 .dl-btns .chip { font-size: 12px; }
 .list-row a.chip { text-decoration: none; }
+.dens-legend {
+  display: flex; align-items: center; gap: 8px; margin-top: 10px;
+  font-size: 11.5px; color: var(--ink-faint); justify-content: flex-end;
+}
+.dens-legend i {
+  width: 120px; height: 8px; border-radius: 4px;
+  background: linear-gradient(90deg, rgb(80,88,150), rgb(157,123,255), rgb(255,201,107), rgb(255,154,213));
+}
 .mod-title { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 0 0 14px; }
 .mod-title h2 { margin: 0; font-size: 20px; font-weight: 900; }
 .mod-title .desc { color: var(--ink-faint); font-size: 12.5px; }

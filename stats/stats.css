@@ -118,4 +118,16 @@
 @media (max-width: 640px) {
   .chart-box.tall { height: 320px; }
   #taste-map { height: 400px; }
+  /* 窄屏:榜单行改为纵向堆叠,文字完整显示、不省略 */
+  .list-row { flex-direction: column; align-items: stretch; gap: 8px; }
+  .list-row .lname {
+    white-space: normal; overflow: visible; text-overflow: clip;
+    font-size: 13.5px; flex: none;
+  }
+  .list-row .lbar-track { width: 100%; }
+  .list-row .lmeta {
+    width: auto; max-width: 100%; white-space: normal;
+    overflow: visible; text-overflow: clip; font-size: 11.5px;
+  }
+  .back-row { gap: 7px; }
 }

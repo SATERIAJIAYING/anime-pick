@@ -69,6 +69,15 @@ a { color: inherit; text-decoration: none; }
 .nav-links { margin-left: auto; display: flex; align-items: center; gap: 18px; }
 .nav-links a { font-size: 13.5px; color: var(--ink-dim); font-weight: 700; transition: color .15s; }
 .nav-links a:hover { color: var(--ink); }
+.nav-stack-link {
+  display: inline-flex; align-items: center;
+  background: rgba(255,111,181,.08); border: 1px solid rgba(255,111,181,.32);
+  border-radius: 12px; padding: 3px 12px 4px;
+  transition: border-color .15s, background .15s;
+}
+.nav-stack-link:hover { border-color: var(--pink); background: rgba(255,111,181,.16); }
+.nav-stack { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.25; }
+.nav-stack small { font-size: 9.5px; font-weight: 700; color: var(--pink-soft); letter-spacing: .04em; }
 
 /* hero */
 .hero { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 54px 8px 26px; text-align: center; }

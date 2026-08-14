@@ -1,5 +1,15 @@
 /* 统计子站共享脚本 */
-const STATS = fetch("../data/stats.json").then((r) => r.json());
+const STATS = LoadGate.load(
+  [{ key: "stats", url: "../data/stats.json", type: "json" }],
+  { sub: "统计数据(约 0.9 MB)正在下载到你的浏览器,下载完成后即可查看图表。" }
+).then((rows) => {
+  LoadGate.gate.close();
+  return rows[0].value;
+}).catch((e) => {
+  console.error(e);
+  LoadGate.gate.fail("统计数据下载失败,请检查网络后点「重新下载」。");
+  return new Promise(() => {}); // 保持挂起,遮罩与重试按钮继续展示
+});
 
 const CHART_DEFAULTS = {
   color: "#a7b0d6",

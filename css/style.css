@@ -346,3 +346,52 @@ a { color: inherit; text-decoration: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ============================================================
+   LoadGate — 数据下载门禁(全屏遮罩 + 进度)
+   ============================================================ */
+html.boot-locked, html.boot-locked body { overflow: hidden; }
+.loadgate {
+  position: fixed; inset: 0; z-index: 999;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  background:
+    radial-gradient(1000px 520px at 50% -10%, rgba(157, 123, 255, 0.28), transparent 60%),
+    linear-gradient(180deg, rgba(10, 13, 28, 0.985), rgba(18, 22, 46, 0.985));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 1;
+  transition: opacity 0.45s ease;
+  text-align: center;
+}
+.loadgate.lg-hidden { opacity: 0; pointer-events: none; }
+.loadgate.lg-done { opacity: 0; pointer-events: none; }
+.loadgate [hidden] { display: none !important; }
+.lg-box { width: min(540px, 100%); }
+.lg-icon { font-size: 52px; display: inline-block; animation: lg-bob 1.6s ease-in-out infinite; }
+@keyframes lg-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.lg-title { margin: 14px 0 8px; font-size: 20px; font-weight: 900; letter-spacing: 0.02em; }
+.lg-sub { margin: 0 0 24px; color: var(--ink-dim); font-size: 13.5px; line-height: 1.8; }
+.lg-track {
+  height: 10px; border-radius: 999px; overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.lg-fill {
+  height: 100%; width: 0; border-radius: 999px;
+  background: var(--grad);
+  transition: width 0.25s ease;
+}
+.lg-meta {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 14px;
+  margin-top: 10px; font-size: 12.5px; color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.lg-pct { color: var(--pink); font-weight: 900; font-size: 14px; }
+.lg-file { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.lg-hint { margin: 18px 0 0; color: var(--ink-faint); font-size: 12px; line-height: 1.7; }
+.lg-retry { margin-top: 20px; }
+.loadgate.lg-error .lg-icon { animation: none; }

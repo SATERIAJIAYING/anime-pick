@@ -28,22 +28,24 @@
   function norm(v) { return Math.sqrt(dot(v, v)) || 1e-8; }
 
   async function load() {
-    const [m, items, embBuf, protoBuf, coBuf] = await Promise.all([
-      fetch("data/model.json").then((r) => r.json()),
-      fetch("data/items.json").then((r) => r.json()),
-      fetch("data/embeddings.bin").then((r) => r.arrayBuffer()),
-      fetch("data/prototypes.bin").then((r) => r.arrayBuffer()),
-      fetch("data/co_loved.json").then((r) => r.json()),
-    ]);
-    S.model = m;
-    S.items = items;
-    S.emb = decode(new Uint8Array(embBuf), m.quant);
-    S.proto = decode(new Uint8Array(protoBuf), m.prototypes.quant);
-    S.coLoved = coBuf;
-    for (const it of items) S.byId.set(it.id, it);
+    const rows = await LoadGate.load([
+      { key: "model", url: "data/model.json", type: "json" },
+      { key: "items", url: "data/items.json", type: "json" },
+      { key: "emb", url: "data/embeddings.bin", type: "bin" },
+      { key: "proto", url: "data/prototypes.bin", type: "bin" },
+      { key: "co", url: "data/co_loved.json", type: "json" },
+    ], { sub: "推荐模型与数据(约 1.2 MB)正在下载到你的浏览器,全部在本地运行,请稍候。" });
+    const v = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+    S.model = v.model;
+    S.items = v.items;
+    S.emb = decode(new Uint8Array(v.emb), v.model.quant);
+    S.proto = decode(new Uint8Array(v.proto), v.model.prototypes.quant);
+    S.coLoved = v.co;
+    for (const it of v.items) S.byId.set(it.id, it);
+    LoadGate.gate.close();
     // 热门速选 chips
     const chips = $("#chips");
-    const hot = [...items].sort((a, b) => (b.popularity || 0) - (a.popularity || 0)).slice(0, 12);
+    const hot = [...S.items].sort((a, b) => (b.popularity || 0) - (a.popularity || 0)).slice(0, 12);
     for (const it of hot) {
       const c = el("button", "chip", titleOf(it));
       c.onclick = () => pick(it);
@@ -220,5 +222,8 @@
     box.appendChild(grid);
   }
 
-  load();
+  load().catch((e) => {
+    console.error(e);
+    LoadGate.gate.fail("本页需要的数据下载失败,请检查网络后点「重新下载」。");
+  });
 })();

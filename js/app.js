@@ -95,34 +95,28 @@
   function norm(v) { return Math.sqrt(dot(v, v)) || 1e-8; }
 
   async function loadModel() {
-    const [m, items, embBuf, embPickBuf, protoBuf, coBuf] = await Promise.all([
-      fetch("data/model.json").then((r) => r.json()),
-      fetch("data/items.json").then((r) => r.json()),
-      fetch("data/embeddings.bin").then((r) => r.arrayBuffer()),
-      fetch("data/embeddings_picker.bin").then((r) => r.arrayBuffer()),
-      fetch("data/prototypes.bin").then((r) => r.arrayBuffer()),
-      fetch("data/co_loved.json").then((r) => r.json()),
-    ]);
-    S.model = m;
-    S.items = items;
-    S.emb = decode(new Uint8Array(embBuf), m.quant);                    // BPR:排序用
-    S.embPick = decode(new Uint8Array(embPickBuf), m.quant_picker || m.quant); // ALS:提问用
-    S.proto = decode(new Uint8Array(protoBuf), m.prototypes.quant);
-    S.coLoved = coBuf;
-    S.maxControversy = Math.max(...items.map((it) => it.controversy || 0), 1);
-    for (const it of items) S.byId.set(it.id, it);
-    // 同好短评(可缺失:抓取完成后由 finalize 拷入)
-    try {
-      S.comments = await fetch("data/comments.json").then((r) => r.json());
-    } catch {
-      S.comments = {};
-    }
-    // 观众群名称(可选)
-    try {
-      S.groupNames = (await fetch("data/group_names.json").then((r) => r.json())).names || [];
-    } catch {
-      S.groupNames = [];
-    }
+    // 走 LoadGate:下载期间全屏遮罩 + 实时进度,失败抛错由 boot() 接管
+    const rows = await LoadGate.load([
+      { key: "model", url: "data/model.json", type: "json" },
+      { key: "items", url: "data/items.json", type: "json" },
+      { key: "emb", url: "data/embeddings.bin", type: "bin" },
+      { key: "embPick", url: "data/embeddings_picker.bin", type: "bin" },
+      { key: "proto", url: "data/prototypes.bin", type: "bin" },
+      { key: "co", url: "data/co_loved.json", type: "json" },
+      { key: "comments", url: "data/comments.json", type: "json", optional: true },
+      { key: "groupNames", url: "data/group_names.json", type: "json", optional: true },
+    ], { sub: "推荐模型与数据(约 1.5 MB)正在下载到你的浏览器,全部在本地运行,请稍候。" });
+    const v = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+    S.model = v.model;
+    S.items = v.items;
+    S.emb = decode(new Uint8Array(v.emb), v.model.quant);                    // BPR:排序用
+    S.embPick = decode(new Uint8Array(v.embPick), v.model.quant_picker || v.model.quant); // ALS:提问用
+    S.proto = decode(new Uint8Array(v.proto), v.model.prototypes.quant);
+    S.coLoved = v.co;
+    S.comments = v.comments || {};          // 可缺失:抓取完成后由 finalize 拷入
+    S.groupNames = (v.groupNames && v.groupNames.names) || [];
+    S.maxControversy = Math.max(...S.items.map((it) => it.controversy || 0), 1);
+    for (const it of S.items) S.byId.set(it.id, it);
   }
 
   /* ---------------- profile & scoring ---------------- */
@@ -623,10 +617,10 @@
       await loadModel();
     } catch (e) {
       console.error(e);
-      document.body.innerHTML =
-        '<p style="text-align:center;padding:80px 20px;color:#a7b0d6">模型数据加载失败,请稍后重试。</p>';
+      LoadGate.gate.fail("核心数据(模型/条目/向量)下载失败,请检查网络后点「重新下载」。");
       return;
     }
+    LoadGate.gate.close();
     renderAnchors();
     bindQuiz();
     healthCheck();

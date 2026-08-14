@@ -55,8 +55,8 @@
 }
 .list-row .lname { font-weight: 700; font-size: 14px; flex: 1 1 220px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .list-row .lmeta {
-  font-size: 12px; color: var(--ink-faint); flex: none; width: 230px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 12px; color: var(--ink-faint); flex: none; width: 250px;
+  white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.6;
 }
 .list-row .lbar-track {
   flex: none; width: 200px; height: 8px; border-radius: 4px;

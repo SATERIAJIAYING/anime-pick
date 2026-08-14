@@ -1,0 +1,14 @@
+# 数据许可:CC0 1.0(适用于本仓库的非代码数据)
+
+本仓库中的非代码数据——包括 data/ 目录下的模型与统计产物(如 items.json、
+stats.json、co_loved.json、comments.json、embeddings.bin 等)以及站点文案——
+按 Creative Commons Zero v1.0 放弃一切著作权及相关权利:
+
+  https://creativecommons.org/publicdomain/zero/1.0/
+
+说明:
+
+- 代码(含 pipeline/ 目录脚本)采用 0BSD 许可(见 LICENSE);
+- 数据内容本身源自 Bangumi 番组计划,其内容权利归 Bangumi 及原作者;
+  本站仅放弃自己整理、聚合与派生部分的权益;
+- 统计产物只包含聚合信息,不含任何单个用户的标识。

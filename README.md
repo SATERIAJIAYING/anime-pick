@@ -31,4 +31,8 @@
 - [GitHub Issues](https://github.com/SATERIAJIAYING/anime-pick/issues)
 - 邮件:Xingqaq@qq.com
 
-数据来自 [Bangumi 番组计划](https://bangumi.github.io/api/),版权归其所有。
+## 许可
+
+- **代码**:[0BSD](LICENSE)(零要求,可任意使用、修改、商用)
+- **数据与文案**:[CC0 1.0](LICENSE-DATA)(放弃一切权利,无需署名)
+- 数据内容源自 [Bangumi 番组计划](https://bangumi.github.io/api/),内容权利归 Bangumi 及原作者;统计产物仅含聚合信息,不含单个用户标识

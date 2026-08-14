@@ -84,74 +84,16 @@
       const py = (v) => 12 + ((v - y0) / (y1 - y0 || 1)) * (H - 24);
       const colOf = (c) => PALETTE[c % PALETTE.length];
       const pts = items.map((p, i) => ({ x: px(p.x), y: py(p.y), p, i }));
-      for (const pt of pts) {
-        ctx.fillStyle = colOf(pt.p.cluster) + "88";
-        ctx.beginPath();
-        ctx.arc(pt.x, pt.y, 2.4, 0, Math.PI * 2);
-        ctx.fill();
-      }
       const protos = s.map.protos.map((pr) => ({ x: px(pr.x), y: py(pr.y), pr }));
-      for (const pr of protos) {
-        ctx.fillStyle = "#ffffff";
-        ctx.strokeStyle = colOf(pr.pr.k);
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(pr.x, pr.y, 4 + Math.min(10, pr.pr.size / 5), 0, Math.PI * 2);
-        ctx.fill(); ctx.stroke();
-      }
-      // 图例:前 12 簇 + 说明
-      const leg = document.getElementById("legend");
-      const topClusters = [...new Set(items.map((p) => p.cluster))].slice(0, 12);
-      for (const c of topClusters) {
-        const span = document.createElement("span");
-        span.innerHTML = `<i style="background:${colOf(c)}"></i>簇 ${c}`;
-        leg.appendChild(span);
-      }
-      const span = document.createElement("span");
-      span.innerHTML = `<i style="background:#fff;border:2px solid #ff6fb5"></i>观众群`;
-      leg.appendChild(span);
-      // 悬浮
-      let shownProto = null;
-      cv.onmousemove = (e) => {
-        const rect = cv.getBoundingClientRect();
-        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-        let best = null, bd = 30 * 30;
-        for (const pr of protos) {
-          const d = (mx - pr.x) ** 2 + (my - pr.y) ** 2;
-          if (d < bd) { bd = d; best = pr.pr; }
-        }
-        if (best) {
-          tip.style.display = "block";
-          tip.style.left = `${mx + 14}px`;
-          tip.style.top = `${my + 10}px`;
-          tip.textContent = `「${best.name}」观众群 · ${best.size} 人 · 心头好:${best.loves.slice(0, 3).join("、")}`;
-          shownProto = best;
-          return;
-        }
-        let bi = -1; bd = 16 * 16;
-        for (const pt of pts) {
-          const d = (mx - pt.x) ** 2 + (my - pt.y) ** 2;
-          if (d < bd) { bd = d; bi = pt.i; }
-        }
-        if (bi >= 0) {
-          const p = items[bi];
-          tip.style.display = "block";
-          tip.style.left = `${mx + 14}px`;
-          tip.style.top = `${my + 10}px`;
-          tip.textContent = `${p.name}(簇 ${p.cluster})`;
-          shownProto = null;
-        } else {
-          tip.style.display = "none";
-        }
-      };
-      cv.onmouseleave = () => { tip.style.display = "none"; };
-      // 点击观众群:高亮最近 15 部番 + 半径圈 + 清单
+      const protoOf = (k) => protos[k];
+      // 着色模式:cluster=按 24 簇(类型分区);proto=按最近观众群
+      let colorMode = "cluster";
+      const itemColor = (p) => colorMode === "cluster" ? colOf(p.cluster) : colOf(p.proto);
       let selected = null;
-      const detail = document.getElementById("proto-detail");
       const drawAll = () => {
         ctx.clearRect(0, 0, W, H);
         for (const pt of pts) {
-          ctx.fillStyle = (selected && !pt.hl ? "rgba(255,255,255,.06)" : colOf(pt.p.cluster) + "88");
+          ctx.fillStyle = (selected && !pt.hl ? "rgba(255,255,255,.06)" : itemColor(pt.p) + "88");
           ctx.beginPath();
           ctx.arc(pt.x, pt.y, pt.hl ? 3.6 : 2.4, 0, Math.PI * 2);
           ctx.fill();
@@ -173,6 +115,68 @@
           ctx.setLineDash([]);
         }
       };
+      drawAll();
+      // 图例:着色模式开关 + 前 12 簇
+      const leg = document.getElementById("legend");
+      const toggleBtn = document.createElement("button");
+      toggleBtn.className = "chip";
+      toggleBtn.textContent = "🎨 按观众群着色";
+      toggleBtn.onclick = () => {
+        colorMode = colorMode === "cluster" ? "proto" : "cluster";
+        toggleBtn.textContent = colorMode === "cluster" ? "🎨 按观众群着色" : "🎨 按类型簇着色";
+        drawAll();
+      };
+      leg.appendChild(toggleBtn);
+      const modeLabel = document.createElement("span");
+      modeLabel.id = "mode-label";
+      modeLabel.textContent = "当前:类型簇着色(动画颜色=24 个兴趣簇;点观众群可看其附近番剧)";
+      leg.appendChild(modeLabel);
+      for (const c of [...new Set(items.map((p) => p.cluster))].slice(0, 12)) {
+        const span = document.createElement("span");
+        span.innerHTML = `<i style="background:${colOf(c)}"></i>簇 ${c}`;
+        leg.appendChild(span);
+      }
+      const span = document.createElement("span");
+      span.innerHTML = `<i style="background:#fff;border:2px solid #ff6fb5"></i>观众群(圆环颜色=群编号)`;
+      leg.appendChild(span);
+      // 悬浮
+      let shownProto = null;
+      cv.onmousemove = (e) => {
+        const rect = cv.getBoundingClientRect();
+        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        let best = null, bd = 30 * 30;
+        for (const pr of protos) {
+          const d = (mx - pr.x) ** 2 + (my - pr.y) ** 2;
+          if (d < bd) { bd = d; best = pr.pr; }
+        }
+        if (best) {
+          tip.style.display = "block";
+          tip.style.left = `${mx + 14}px`;
+          tip.style.top = `${my + 10}px`;
+          tip.textContent = `「${best.name}」观众群 · 第 ${best.k + 1} 群 · ${best.size} 人 · 心头好:${best.loves.slice(0, 3).join("、")}`;
+          shownProto = best;
+          return;
+        }
+        let bi = -1; bd = 16 * 16;
+        for (const pt of pts) {
+          const d = (mx - pt.x) ** 2 + (my - pt.y) ** 2;
+          if (d < bd) { bd = d; bi = pt.i; }
+        }
+        if (bi >= 0) {
+          const p = items[bi];
+          const pn = protoOf(p.proto);
+          tip.style.display = "block";
+          tip.style.left = `${mx + 14}px`;
+          tip.style.top = `${my + 10}px`;
+          tip.textContent = `${p.name} · 簇 ${p.cluster} · 最近观众群「${pn.pr.name}」(第 ${p.proto + 1} 群)`;
+          shownProto = null;
+        } else {
+          tip.style.display = "none";
+        }
+      };
+      cv.onmouseleave = () => { tip.style.display = "none"; };
+      // 点击观众群:高亮最近 15 部番 + 半径圈 + 清单
+      const detail = document.getElementById("proto-detail");
       cv.onclick = () => {
         if (!shownProto) return;
         const pr = protos.find((p) => p.pr === shownProto);
@@ -194,7 +198,7 @@
           detail.hidden = false;
           detail.textContent = "";
           detail.appendChild(el("b", null,
-            `观众群 ${pr.pr.k + 1}(${pr.pr.size} 人)附近最近的 15 部番(距离为 2D 投影距离):`));
+            `「${pr.pr.name}」观众群(第 ${pr.pr.k + 1} 群,${pr.pr.size} 人)附近最近的 15 部番(距离为 2D 投影距离):`));
           const list = el("div", "proto-list");
           for (const n of near) {
             const row = el("span", "proto-item", `${n.pt.p.name}`);

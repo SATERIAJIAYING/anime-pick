@@ -107,7 +107,11 @@ function barList(container, items, valueFn, nameFn, metaFn) {
     bar.style.width = `${Math.max(4, (valueFn(it) / max) * 100)}%`;
     track.appendChild(bar);
     row.appendChild(track);
-    if (metaFn) row.appendChild(el("span", "lmeta", metaFn(it)));
+    if (metaFn) {
+      const m = el("span", "lmeta", metaFn(it));
+      m.title = metaFn(it);
+      row.appendChild(m);
+    }
     container.appendChild(row);
   }
 }

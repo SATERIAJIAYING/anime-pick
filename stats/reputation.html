@@ -48,9 +48,11 @@
     <div class="mod">
       <div class="mod-title">
         <h2>爱恨分明榜</h2>
-        <span class="desc">两极分化度 =(1-4 分 + 9-10 分)占比,评分人数 ≥30</span>
+        <span class="desc">两极分化度 = 2×min(差评占比, 超喜欢占比),评分人数 ≥30</span>
       </div>
       <div class="chart-box" style="height:420px"><canvas id="c-lovehate"></canvas></div>
+      <div class="list-title">爱恨构成(❤️ 超喜欢 9-10 分占比 / 👎 差评 1-4 分占比)</div>
+      <div id="lovehate-list"></div>
       <p class="note">榜首类作品通常是「话题性极强、结局/风格引发站队」的番——它们不是平庸,是敢冒犯。</p>
     </div>
 
@@ -84,8 +86,35 @@
     STATS.then((s) => {
       mkBar("c-lovehate", s.loveHate.map((x) => x.name), s.loveHate.map((x) => x.bimodality), {
         horizontal: true, color: PALETTE[6],
-        tooltip: (c) => `${c.raw * 100}% 的评分落在极端区间`,
+        tooltip: (c) => {
+          const x = s.loveHate[c.dataIndex];
+          return `两极分化 ${c.raw} · ❤️超喜欢 ${(x.superRate * 100).toFixed(0)}% · 👎差评 ${((x.hateRate || 0) * 100).toFixed(0)}%`;
+        },
       });
+      // 爱恨构成:每行双条(爱/恨)
+      {
+        const box = document.getElementById("lovehate-list");
+        box.textContent = "";
+        for (const x of s.loveHate) {
+          const row = el("div", "list-row");
+          row.appendChild(el("span", "lname", x.name));
+          const track = el("span", "lbar-track");
+          const love = el("span", "lbar");
+          love.style.width = `${x.superRate * 100}%`;
+          love.style.background = "#ff6fb5";
+          track.appendChild(love);
+          row.appendChild(track);
+          const track2 = el("span", "lbar-track");
+          const hate = el("span", "lbar");
+          hate.style.width = `${(x.hateRate || 0) * 100}%`;
+          hate.style.background = "#ff7b7b";
+          track2.appendChild(hate);
+          row.appendChild(track2);
+          row.appendChild(el("span", "lmeta",
+            `❤️ ${(x.superRate * 100).toFixed(0)}% · 👎 ${((x.hateRate || 0) * 100).toFixed(0)}%`));
+          box.appendChild(row);
+        }
+      }
       const rep = s.reputation.filter((x) => x.n >= 30);
       mkScatter("c-quad", rep.map((x) => ({
         x: x.mean, y: x.superRate,

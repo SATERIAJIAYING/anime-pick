@@ -43,7 +43,7 @@
       <a href="meta.html">数据自画像</a>
     </div>
 
-    <div class="glossary"><b>名词解释:</b><b>超喜欢率</b> = 全部评分中打 9-10 分的占比(「疯狂爱上」的比例)。<b>两极分化度</b> = 2 × min(差评分占比, 超喜欢占比)——必须「又有人恨又有人爱」才算两极;全是好评的动画此项为 0。<b>平均分</b> = 1-10 分评分的均值。<b>全站热度</b> = wiki 归档里的「评分人数 + 收藏数」合成值。<b>遗珠</b> = 热度低但超喜欢率高的作品;<b>好评但不动心</b> = 均分高但几乎没人打 9-10 分的作品。</div>
+    <div class="glossary"><b>名词解释:</b><b>超喜欢率</b> = 全部评分中打 9-10 分的占比(「疯狂爱上」的比例)。<b>两极分化度</b> = 2 × min(差评分占比, 超喜欢占比)——必须「又有人恨又有人爱」才算两极;全是好评的动画此项为 0。<b>平均分</b> = 1-10 分评分的均值。<b>全站热度</b> = wiki 归档里的「评分人数 + 收藏数」合成值。<b>遗珠</b> = 热度低但超喜欢率高的作品(「前 X% 低」= 全站 ≥15 评分动画中热度不高于它的比例);<b>好评但不动心</b> = 均分 ≥7.6 但超喜欢率垫底的作品(「前 X% 低」= 在同样均分 ≥7.6 且 ≥50 人评分的<b>同侪组</b>中,超喜欢率不高于它的比例)。</div>
 
     <div class="mod">
       <div class="mod-title">
@@ -133,11 +133,11 @@
       barList(document.getElementById("dull-list"), s.dull,
         (x) => (0.2 - x.superRate),
         (x) => x.name,
-        (x) => `均分 ${x.mean} · 超喜欢率仅 ${(x.superRate * 100).toFixed(0)}%`);
+        (x) => `均分 ${x.mean} · 超喜欢率 ${(x.superRate * 100).toFixed(0)}% · 同侪组最低前 ${x.superPct}%`);
       barList(document.getElementById("gem-list"), s.hiddenGem,
         (x) => x.superRate,
         (x) => x.name,
-        (x) => `超喜欢率 ${(x.superRate * 100).toFixed(0)}% · 热度 ${x.pop}`);
+        (x) => `超喜欢率 ${(x.superRate * 100).toFixed(0)}% · 热度全站最低前 ${x.popPct}%`);
     });
   </script>
 </body>

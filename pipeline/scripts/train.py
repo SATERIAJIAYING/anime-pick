@@ -6,7 +6,7 @@ Pipeline: ratings -> user/item filtering -> explicit ALS (d dims)
           -> int8 quantization -> artifacts/ export -> offline cold-start eval
           (Hit@10 / nDCG@10 vs popularity & random baselines)
 
-Usage: python3 scripts/train.py [--dims 64] [--clusters 24]
+Usage (from repo root): pipeline/.venv/bin/python pipeline/scripts/train.py [--dims 64] [--clusters 24]
 """
 import argparse, json, math, os, random, sys, time
 import numpy as np

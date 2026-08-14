@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Finalize: merge fetched covers into items.json and stage site data.
 
-Usage: python3 scripts/finalize.py
+Usage (from repo root): pipeline/.venv/bin/python pipeline/scripts/finalize.py
 """
 import json, os, shutil
 

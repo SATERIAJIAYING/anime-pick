@@ -246,17 +246,21 @@
 
     <section class="paper-sec">
       <h2 id="4-复现指南(Reproducibility)">4 复现指南(Reproducibility)</h2>
-      <p>代码与脚本位于项目仓库 <code>recsys/</code> 下(scripts/*.py),全部使用 Python 3 + numpy/scipy。</p>
+      <p>代码与脚本位于项目仓库的 <code>pipeline/</code> 目录(<code>pipeline/scripts/*.py</code>),全部使用 Python 3.11+ + numpy/scipy。
+      以下命令均在<b>仓库根目录</b>执行;环境、数据与中间产物落在 <code>pipeline/</code> 内,
+      最终产物打包到 <code>pipeline/site/data/</code>,复制到仓库根目录 <code>data/</code> 即更新站点。</p>
       <table class="pt">
         <tr><th>步骤</th><th>命令</th><th>说明</th></tr>
-        <tr><td>1. 环境</td><td><code>python3 -m venv .venv && pip install numpy scipy</code></td><td>仅 numpy/scipy 两个依赖</td></tr>
-        <tr><td>2. 条目归档</td><td><code>scripts/extract_dump.py</code></td><td>需先将 Archive 最新 dump 存为 <code>data/dump.zip</code></td></tr>
-        <tr><td>3. 系列归并</td><td><code>scripts/build_franchises.py</code></td><td>基于关联表并查集</td></tr>
-        <tr><td>4. 评分爬取</td><td><code>scripts/crawl.py subjects</code> 后分片 <code>scripts/crawl.py ratings --shard s --shard-count N</code></td><td>限速 ~1 req/s,断点续爬</td></tr>
-        <tr><td>5. 训练+评估</td><td><code>scripts/train.py --model bpr --dims 64 --clusters 24</code></td><td>导出 embeddings/原型/共现图并打印评估</td></tr>
-        <tr><td>6. 短评</td><td><code>scripts/fetch_comments.py</code></td><td>可选,纯展示</td></tr>
-        <tr><td>7. 打包</td><td><code>scripts/finalize.py</code></td><td>产出 <code>site/data/</code> 供静态部署</td></tr>
+        <tr><td>1. 环境</td><td><code>python3 -m venv pipeline/.venv && pipeline/.venv/bin/pip install numpy scipy scikit-learn</code></td><td>虚拟环境位于 <code>pipeline/.venv</code></td></tr>
+        <tr><td>2. 条目归档</td><td><code>pipeline/.venv/bin/python pipeline/scripts/extract_dump.py</code></td><td>需先将 Archive 最新 dump 存为 <code>pipeline/data/dump.zip</code></td></tr>
+        <tr><td>3. 系列归并</td><td><code>pipeline/.venv/bin/python pipeline/scripts/build_franchises.py</code></td><td>基于关联表并查集</td></tr>
+        <tr><td>4. 评分爬取</td><td><code>pipeline/.venv/bin/python pipeline/scripts/crawl.py subjects</code> 后分片 <code>.../crawl.py ratings --shard s --shard-count N</code></td><td>限速 ~1 req/s,断点续爬</td></tr>
+        <tr><td>5. 训练+评估</td><td><code>pipeline/.venv/bin/python pipeline/scripts/train.py --model bpr --dims 64 --clusters 24</code></td><td>导出 embeddings/原型/共现图并打印评估</td></tr>
+        <tr><td>6. 短评</td><td><code>pipeline/.venv/bin/python pipeline/scripts/fetch_comments.py</code></td><td>可选,纯展示</td></tr>
+        <tr><td>7. 打包</td><td><code>pipeline/.venv/bin/python pipeline/scripts/finalize.py</code></td><td>产出 <code>pipeline/site/data/</code></td></tr>
+        <tr><td>8. 上线</td><td><code>cp -R pipeline/site/data/. data/</code></td><td>站点直接引用仓库根目录 <code>data/</code></td></tr>
       </table>
+      <p>亦可一键执行:`bash pipeline/run_all.sh`(训练 → 补封面 → 打包)。</p>
       <p><b>关键超参数总表:</b></p>
       <table class="pt">
         <tr><th>参数</th><th>取值</th></tr>

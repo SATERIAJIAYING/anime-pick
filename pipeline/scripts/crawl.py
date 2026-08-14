@@ -9,9 +9,9 @@ Resumable: appends to data/users.jsonl / data/ratings.jsonl, skips what is done.
 Polite: ~0.9s between requests, backoff on 429/5xx/network errors.
 Proxy: uses macOS system proxy automatically (urllib), env vars override.
 
-Usage:
-  python3 scripts/crawl.py subjects --pages 3 [--subjects-file data/subjects.txt]
-  python3 scripts/crawl.py ratings [--max-users 20000]
+Usage (from repo root):
+  pipeline/.venv/bin/python pipeline/scripts/crawl.py subjects --pages 3 [--subjects-file pipeline/data/subjects.txt]
+  pipeline/.venv/bin/python pipeline/scripts/crawl.py ratings [--max-users 20000]
 """
 import argparse, json, os, random, re, sys, time, urllib.request
 

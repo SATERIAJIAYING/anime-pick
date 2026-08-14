@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Parse the Bangumi Archive dump into a filtered anime pool.
 
-Input:  data/dump.zip (weekly wiki archive)
-Output: data/subjects_filtered.jsonl  (type=2, non-nsfw, slim fields)
-        appends top popular anime ids to data/subjects.txt for crawling
+Input:  pipeline/data/dump.zip (weekly wiki archive)
+Output: pipeline/data/subjects_filtered.jsonl  (type=2, non-nsfw, slim fields)
+        appends top popular anime ids to pipeline/data/subjects.txt for crawling
 """
 import json, os, sys, zipfile
 

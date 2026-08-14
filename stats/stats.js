@@ -41,9 +41,10 @@ function mkBar(id, labels, values, opts = {}) {
         },
       },
       scales: {
-        x: { grid: { color: "rgba(255,255,255,.06)" }, ticks: CHART_DEFAULTS },
-        y: { grid: { color: "rgba(255,255,255,.06)" }, ticks: CHART_DEFAULTS },
+        x: { grid: { color: "rgba(255,255,255,.06)" }, ticks: { ...CHART_DEFAULTS, autoSkip: true } },
+        y: { grid: { color: "rgba(255,255,255,.06)" }, ticks: { ...CHART_DEFAULTS, autoSkip: false } },
       },
+      layout: { padding: { left: 6, right: 10 } },
     },
   });
 }

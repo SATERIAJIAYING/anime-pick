@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anime Pick · 找到你的下一部番</title>
+  <meta name="description" content="勾选看过的番,快问快答几轮,从你的口味里筛出下一部想看的动画。纯前端运行,数据与模型都来自 Bangumi。" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://lain.bgm.tv" />
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <canvas id="petals" aria-hidden="true"></canvas>
+
+  <header class="nav">
+    <a class="brand" href="#">
+      <span class="brand-icon">🎬</span>
+      <span class="brand-text">Anime<span class="grad">Pick</span></span>
+      <span class="brand-jp">アニメ・ピック</span>
+    </a>
+    <nav class="nav-links">
+      <a href="discover.html">💘 发现 <span class="jp">Discover</span></a>
+      <a href="stats/index.html">📊 统计 <span class="jp">Stats</span></a>
+      <a href="methods.html">📜 方法 <span class="jp">Methods</span></a>
+      <a href="https://sateriajiaying.github.io/anime-gallery/" target="_blank" rel="noopener">🌸 画廊</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <!-- ============ Screen 0: home ============ -->
+    <section class="screen" id="screen-home">
+      <div class="hero home-hero">
+        <p class="hero-eyebrow">✦ アニメ・ピック ✦</p>
+        <h1 class="hero-title">快问快答几轮,<br />找到你的<span class="grad">下一部番</span></h1>
+        <p class="hero-sub">不用注册、不用登录。回答几个问题,算法会从 1,559 个动画系列里,筛出你没看过、却最可能深爱的那几部。</p>
+      </div>
+
+      <div class="how-row">
+        <div class="how-card">
+          <div class="how-ico">📌</div>
+          <div class="how-step">Step 1</div>
+          <h3>勾出你看过的</h3>
+          <p>从 20 部覆盖各类口味的动画里,勾选你看过的(至少 3 部)。这是算法认识你的第一步。</p>
+        </div>
+        <div class="how-card">
+          <div class="how-ico">⚡</div>
+          <div class="how-step">Step 2</div>
+          <h3>凭直觉快问快答</h3>
+          <p>默认 25 轮,按你的熟练度自动伸缩到 12~40 轮。六档作答:没看过 / 没兴趣 / 一般 / 喜欢 / 不喜欢 / 超喜欢。「没看过」不耗轮次,随时可提前出结果。</p>
+        </div>
+        <div class="how-card">
+          <div class="how-ico">💎</div>
+          <div class="how-step">Step 3</div>
+          <h3>拿到你的专属推荐</h3>
+          <p>热门精选 3 部 + 小众之选 5 部,附推荐理由、同好短评和你的兴趣画像;点掉看过的,榜单立即重排。</p>
+        </div>
+      </div>
+
+      <div class="stats-panel">
+        <div class="stats-title">这套推荐背后</div>
+        <div class="stats-grid">
+          <div class="stat-item"><b>306,368</b><span>条用户评分</span></div>
+          <div class="stat-item"><b>2,021</b><span>位 Bangumi 用户</span></div>
+          <div class="stat-item"><b>1,559</b><span>个动画系列</span></div>
+          <div class="stat-item"><b>64 维</b><span>口味地图</span></div>
+          <div class="stat-item"><b>64 类</b><span>观众群画像</span></div>
+          <div class="stat-item"><b>≈1.5 MB</b><span>全部在浏览器本地算</span></div>
+        </div>
+        <p class="stats-note">数据来自 <a class="link" href="https://bangumi.github.io/api/" target="_blank" rel="noopener">Bangumi 番组计划</a>公开数据;模型离线训练,推理完全在你的浏览器内完成,不收集任何个人信息。</p>
+      </div>
+
+      <div class="home-cta">
+        <a class="btn btn-primary btn-big" id="start-btn" href="#screen-anchors">🎬 开始测试</a>
+        <a class="btn btn-ghost btn-big" href="discover.html">💘 从一部番找同类</a>
+        <a class="btn btn-ghost btn-big" href="stats/index.html">📊 数据挖掘统计</a>
+      </div>
+      <p class="home-methods">想了解背后的模型与数据?<a class="link" href="methods.html">方法页</a>有完整说明。</p>
+    </section>
+
+    <!-- ============ Screen 1: anchors ============ -->
+    <section class="screen" id="screen-anchors" hidden>
+      <div class="hero">
+        <p class="hero-eyebrow">✦ Step 1 / 3 ✦</p>
+        <h1 class="hero-title">先勾出<span class="grad">你看过的番</span></h1>
+        <p class="hero-sub">勾选至少 3 部。选得越准,后面的推荐越懂你。</p>
+      </div>
+      <div class="anchor-grid" id="anchor-grid"></div>
+      <div class="foot-bar">
+        <span class="foot-hint" id="anchor-hint">已选 0 部</span>
+        <button class="btn btn-primary" id="to-quiz" disabled>开始 10 轮快问 →</button>
+      </div>
+    </section>
+
+    <!-- ============ Screen 2: quiz ============ -->
+    <section class="screen" id="screen-quiz" hidden>
+      <div class="hero compact">
+        <p class="hero-eyebrow">✦ Step 2 / 3 ✦</p>
+        <h1 class="hero-title">凭直觉回答<span class="grad">10 个问题</span></h1>
+      </div>
+      <div class="progress"><div class="progress-fill" id="progress-fill"></div></div>
+      <p class="quiz-hint">「看过」= 完整看完或看了大部分;只看了开头就弃 → 选「没兴趣」或「不喜欢」。</p>
+      <div class="quiz-stage" id="quiz-stage"></div>
+      <div class="quiz-actions">
+        <button class="btn btn-ghost" data-act="seen">🙈 没看过</button>
+        <button class="btn btn-ghost" data-act="nope">😑 没兴趣</button>
+        <button class="btn btn-ghost" data-act="mid">😐 一般</button>
+        <button class="btn btn-ghost" data-act="like">👍 喜欢</button>
+        <button class="btn btn-bad" data-act="dislike">👎 不喜欢</button>
+        <button class="btn btn-good" data-act="love">💖 超喜欢</button>
+      </div>
+      <p class="quiz-tip" id="quiz-tip">「没看过」不消耗轮次;随时可以点「现在给我结果」。</p>
+      <div class="quiz-finish"><button class="btn btn-ghost" id="finish-now">✨ 现在给我结果</button></div>
+    </section>
+
+    <!-- ============ Screen 3: results ============ -->
+    <section class="screen" id="screen-results" hidden>
+      <div class="hero compact">
+        <p class="hero-eyebrow">✦ Step 3 / 3 ✦</p>
+        <h1 class="hero-title">你的<span class="grad">兴趣画像</span></h1>
+      </div>
+      <div class="profile-box" id="profile-box"></div>
+      <div class="signal-panel" id="signal-panel" hidden></div>
+      <div class="section-head">
+        <div>
+          <p class="section-kicker">For You · 推荐</p>
+          <h2 class="section-title">这些可能合你胃口</h2>
+        </div>
+        <button class="btn btn-ghost" id="restart">🔄 重新开始</button>
+      </div>
+      <p class="seen-hint" id="seen-hint" hidden></p>
+      <div class="rec-group-title" id="group-hot">🔥 热门精选(大家公认的好)</div>
+      <div class="rec-grid" id="rec-grid-hot"></div>
+      <div class="rec-group-title" id="group-niche">💎 小众之选(按你的口味深挖)</div>
+      <div class="rec-grid" id="rec-grid-niche"></div>
+      <p class="foot-note">推荐已排除你在评估中标记「看过」的动画。全部计算在你的浏览器本地完成:模型(64 维隐向量 + 品味原型 + 超喜欢共现图)由 <a class="link" href="https://bangumi.github.io/api/" target="_blank" rel="noopener">Bangumi</a> 公开数据离线训练,不收集任何个人信息。</p>
+    </section>
+  </main>
+
+  <script src="js/app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>口味地图 · AnimePick 统计</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="stats.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="../index.html">
+      <span class="brand-icon">🎬</span>
+      <span class="brand-text">Anime<span class="grad">Pick</span></span>
+      <span class="brand-jp">アニメ・ピック</span>
+    </a>
+    <nav class="nav-links">
+      <a href="../index.html">开始测试</a>
+      <a href="../discover.html">💘 发现</a>
+      <a href="../methods.html">方法</a>
+      <a href="index.html">统计</a>
+      <a href="https://sateriajiaying.github.io/anime-gallery/" target="_blank" rel="noopener">🌸 画廊</a>
+    </nav>
+  </header>
+
+  <main class="stats-wrap">
+    <div class="stats-head">
+      <p class="kicker">✦ MAP ✦</p>
+      <h1>口味地图</h1>
+      <p class="sub">64 维口味空间经 <b>t-SNE</b> 降到 2D,番剧与 64 类观众群<b>处于同一坐标系</b>。悬浮看名字;<b>点击观众群圆点</b>:高亮其附近的番剧并画出半径,看看「你的观众群」周围围着哪些番。</p>
+    </div>
+    <div class="back-row">
+      <a href="index.html">统计中心</a>
+      <a href="map.html" class="on">口味地图</a>
+      <a href="pairs.html">意外动画对</a>
+      <a href="reputation.html">口碑实验室</a>
+      <a href="groups.html">64 类观众群</a>
+      <a href="eras.html">年代与载体</a>
+      <a href="meta.html">数据自画像</a>
+    </div>
+
+    <div class="glossary"><b>名词解释:</b>本图把 1,559 部动画与 64 个观众群一起做 <b>t-SNE 降维</b>(64 维 → 2 维),因此<b>两者处于同一坐标系</b>;t-SNE 只保证「局部邻居关系」可信,大范围距离无意义——所以看点与点是否抱团,而不是两点相距多远。<b>口味枢纽</b> = 共现图度数,即「与多少部动画共享深爱者」。</div>
+
+    <div class="mod">
+      <div class="chart-box map-box">
+        <canvas id="taste-map"></canvas>
+        <div class="map-tip" id="map-tip"></div>
+      </div>
+      <div class="map-legend" id="legend"></div>
+      <div class="proto-detail" id="proto-detail" hidden></div>
+      <p class="note">
+        解读:每个小点是一部动画,t-SNE 后「局部抱团」可信——聚成的团块大致对应类型疆界;
+        白色大圆点是 64 类观众群。点击观众群后画出的圈:圈内是被高亮的「离该群最近的一批番剧」,
+        可视为这群人最常出没的口味区域。注意 t-SNE 的大范围距离无意义,请以局部邻居为准。
+      </p>
+    </div>
+
+    <div class="mod">
+      <div class="mod-title"><h2>口味枢纽</h2><span class="desc">与最多动画共享「深爱者」的动画(共现图度数)</span></div>
+      <div id="hub-list"></div>
+    </div>
+  </main>
+
+  <script src="stats.js"></script>
+  <script>
+    STATS.then((s) => {
+      // ---- 地图 ----
+      const cv = document.getElementById("taste-map");
+      const tip = document.getElementById("map-tip");
+      const dpr = window.devicePixelRatio || 1;
+      const W = cv.clientWidth, H = cv.clientHeight;
+      cv.width = W * dpr; cv.height = H * dpr;
+      const ctx = cv.getContext("2d");
+      ctx.scale(dpr, dpr);
+      const items = s.map.items;
+      const xs = items.map((p) => p.x), ys = items.map((p) => p.y);
+      const x0 = Math.min(...xs), x1 = Math.max(...xs);
+      const y0 = Math.min(...ys), y1 = Math.max(...ys);
+      const px = (v) => 12 + ((v - x0) / (x1 - x0 || 1)) * (W - 24);
+      const py = (v) => 12 + ((v - y0) / (y1 - y0 || 1)) * (H - 24);
+      const colOf = (c) => PALETTE[c % PALETTE.length];
+      const pts = items.map((p, i) => ({ x: px(p.x), y: py(p.y), p, i }));
+      for (const pt of pts) {
+        ctx.fillStyle = colOf(pt.p.cluster) + "88";
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 2.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      const protos = s.map.protos.map((pr) => ({ x: px(pr.x), y: py(pr.y), pr }));
+      for (const pr of protos) {
+        ctx.fillStyle = "#ffffff";
+        ctx.strokeStyle = colOf(pr.pr.k);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(pr.x, pr.y, 4 + Math.min(10, pr.pr.size / 5), 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+      }
+      // 图例:前 12 簇 + 说明
+      const leg = document.getElementById("legend");
+      const topClusters = [...new Set(items.map((p) => p.cluster))].slice(0, 12);
+      for (const c of topClusters) {
+        const span = document.createElement("span");
+        span.innerHTML = `<i style="background:${colOf(c)}"></i>簇 ${c}`;
+        leg.appendChild(span);
+      }
+      const span = document.createElement("span");
+      span.innerHTML = `<i style="background:#fff;border:2px solid #ff6fb5"></i>观众群`;
+      leg.appendChild(span);
+      // 悬浮
+      let shownProto = null;
+      cv.onmousemove = (e) => {
+        const rect = cv.getBoundingClientRect();
+        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        let best = null, bd = 30 * 30;
+        for (const pr of protos) {
+          const d = (mx - pr.x) ** 2 + (my - pr.y) ** 2;
+          if (d < bd) { bd = d; best = pr.pr; }
+        }
+        if (best) {
+          tip.style.display = "block";
+          tip.style.left = `${mx + 14}px`;
+          tip.style.top = `${my + 10}px`;
+          tip.textContent = `「${best.name}」观众群 · ${best.size} 人 · 心头好:${best.loves.slice(0, 3).join("、")}`;
+          shownProto = best;
+          return;
+        }
+        let bi = -1; bd = 16 * 16;
+        for (const pt of pts) {
+          const d = (mx - pt.x) ** 2 + (my - pt.y) ** 2;
+          if (d < bd) { bd = d; bi = pt.i; }
+        }
+        if (bi >= 0) {
+          const p = items[bi];
+          tip.style.display = "block";
+          tip.style.left = `${mx + 14}px`;
+          tip.style.top = `${my + 10}px`;
+          tip.textContent = `${p.name}(簇 ${p.cluster})`;
+          shownProto = null;
+        } else {
+          tip.style.display = "none";
+        }
+      };
+      cv.onmouseleave = () => { tip.style.display = "none"; };
+      // 点击观众群:高亮最近 15 部番 + 半径圈 + 清单
+      let selected = null;
+      const detail = document.getElementById("proto-detail");
+      const drawAll = () => {
+        ctx.clearRect(0, 0, W, H);
+        for (const pt of pts) {
+          ctx.fillStyle = (selected && !pt.hl ? "rgba(255,255,255,.06)" : colOf(pt.p.cluster) + "88");
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, pt.hl ? 3.6 : 2.4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        for (const pr of protos) {
+          ctx.fillStyle = "#ffffff";
+          ctx.strokeStyle = colOf(pr.pr.k);
+          ctx.lineWidth = selected === pr ? 3.5 : 2;
+          ctx.beginPath();
+          ctx.arc(pr.x, pr.y, 4 + Math.min(10, pr.pr.size / 5), 0, Math.PI * 2);
+          ctx.fill(); ctx.stroke();
+        }
+        if (selected) {
+          ctx.strokeStyle = colOf(selected.pr.k);
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath();
+          ctx.arc(selected.x, selected.y, selected.radius, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      };
+      cv.onclick = () => {
+        if (!shownProto) return;
+        const pr = protos.find((p) => p.pr === shownProto);
+        if (!pr) return;
+        if (selected === pr) {
+          selected = null;
+          for (const pt of pts) pt.hl = false;
+          detail.hidden = true;
+        } else {
+          selected = pr;
+          const withDist = pts.map((pt) => ({
+            pt,
+            d: Math.hypot(pt.x - pr.x, pt.y - pr.y),
+          })).sort((a, b) => a.d - b.d);
+          const near = withDist.slice(0, 15);
+          for (const pt of pts) pt.hl = false;
+          for (const n of near) n.pt.hl = true;
+          pr.radius = near[14].d + 4;
+          detail.hidden = false;
+          detail.textContent = "";
+          detail.appendChild(el("b", null,
+            `观众群 ${pr.pr.k + 1}(${pr.pr.size} 人)附近最近的 15 部番(距离为 2D 投影距离):`));
+          const list = el("div", "proto-list");
+          for (const n of near) {
+            const row = el("span", "proto-item", `${n.pt.p.name}`);
+            row.title = `投影距离 ${n.d.toFixed(0)}`;
+            list.appendChild(row);
+          }
+          detail.appendChild(list);
+        }
+        drawAll();
+      };
+      // ---- 枢纽 ----
+      barList(document.getElementById("hub-list"), s.hubs,
+        (h) => h.degree, (h) => h.name, (h) => `共现度数 ${h.degree}`);
+    });
+  </script>
+</body>
+</html>

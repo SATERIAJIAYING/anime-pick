@@ -1,0 +1,114 @@
+/* Methods 页:论文排版,继承夜樱主题 */
+.toc {
+  position: fixed; top: 110px;
+  left: max(18px, calc(50% - 660px));
+  z-index: 60;
+  width: 190px;
+  padding: 14px 14px 12px;
+  background: rgba(14, 18, 40, .78);
+  border: 1px solid var(--line); border-radius: 14px;
+  backdrop-filter: blur(10px);
+}
+.toc-title { font-family: var(--font-jp); font-size: 12px; color: var(--pink-soft); font-weight: 900; letter-spacing: .15em; margin-bottom: 8px; }
+.toc-link {
+  display: block; padding: 5px 10px; border-radius: 8px;
+  font-size: 12.5px; color: var(--ink-dim); line-height: 1.5;
+  transition: background .15s, color .15s;
+}
+.toc-link:hover { background: var(--card-hi); color: var(--ink); }
+.toc-link.on {
+  background: linear-gradient(100deg, rgba(255,111,181,.18), rgba(157,123,255,.18));
+  color: #fff; font-weight: 700;
+}
+@media (max-width: 1180px) { .toc { display: none; } }
+.paper {
+  width: min(860px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 40px 0 80px;
+}
+.paper-head { text-align: center; margin-bottom: 34px; }
+.paper-kicker { color: var(--pink); font-size: 12.5px; letter-spacing: .3em; font-weight: 700; margin: 0 0 10px; }
+.paper-head h1 {
+  margin: 0; font-size: clamp(24px, 4vw, 34px); font-weight: 900; line-height: 1.4;
+}
+.paper-authors { color: var(--ink-faint); font-size: 13px; margin: 14px 0 0; }
+.paper-sec { margin: 0 0 40px; }
+.paper-sec h2 {
+  font-size: 21px; font-weight: 900; margin: 0 0 14px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 10px;
+}
+.paper-sec h2::before {
+  content: ""; width: 6px; height: 22px; border-radius: 3px; background: var(--grad);
+  flex: none;
+}
+.paper-sec h3 {
+  font-size: 16.5px; font-weight: 800; margin: 22px 0 10px; color: var(--pink-soft);
+}
+.paper-sec p { color: var(--ink-dim); font-size: 14.5px; line-height: 1.9; margin: 0 0 12px; }
+.paper-sec b { color: var(--ink); }
+.paper-sec ul, .paper-sec ol { color: var(--ink-dim); font-size: 14.5px; line-height: 1.9; padding-left: 22px; }
+.paper-sec li { margin-bottom: 6px; }
+.paper-note {
+  border-left: 3px solid var(--cyan);
+  background: rgba(90,216,255,.06);
+  padding: 10px 14px; border-radius: 0 12px 12px 0;
+  font-size: 13.5px !important;
+}
+.paper-note b { color: var(--cyan); }
+.formula {
+  text-align: center;
+  padding: 12px 16px; margin: 12px 0;
+  border-radius: 12px;
+  background: rgba(157,123,255,.1); border: 1px solid rgba(157,123,255,.3);
+  font-family: var(--font-jp); font-size: 14.5px; color: #c9b8ff;
+  overflow-x: auto; white-space: nowrap;
+}
+.pt {
+  width: 100%; border-collapse: collapse; margin: 10px 0 16px;
+  font-size: 13.5px; color: var(--ink-dim);
+}
+.pt th {
+  text-align: left; color: var(--ink); font-weight: 700;
+  padding: 9px 12px; border-bottom: 2px solid var(--line-hi);
+  background: rgba(255,255,255,.04);
+}
+.pt td { padding: 8px 12px; border-bottom: 1px solid var(--line); line-height: 1.7; }
+.pt tr:hover td { background: rgba(255,255,255,.03); }
+.pt code, .paper-sec code {
+  font-family: ui-monospace, Menlo, monospace; font-size: 12.5px;
+  background: rgba(255,255,255,.08); padding: 1.5px 6px; border-radius: 6px;
+  color: var(--cyan);
+}
+.pipeline {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: 6px 10px; margin: 14px 0 18px;
+}
+.pstep {
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 9px 12px; font-size: 13px; font-weight: 700; color: var(--ink); text-align: center;
+}
+.pstep small { display: block; font-size: 11px; color: var(--ink-faint); font-weight: 400; margin-top: 3px; }
+.parrow { color: var(--pink); font-size: 16px; }
+.refs { font-size: 13.5px !important; }
+.ack-box {
+  display: flex; gap: 22px; align-items: center;
+  background: var(--card); border: 1px solid var(--line-hi); border-radius: 18px;
+  padding: 20px;
+}
+.ack-img {
+  width: 260px; max-width: 40vw; border-radius: 14px;
+  border: 2px solid rgba(255,111,181,.4);
+  box-shadow: 0 12px 40px -12px rgba(255,111,181,.45);
+}
+.ack-text p { margin: 0 0 8px; }
+.ack-text p:first-child { font-size: 17px; color: var(--ink); }
+.ack-thanks { color: var(--pink-soft); font-family: var(--font-jp); }
+@media (max-width: 640px) { .ack-box { flex-direction: column; text-align: center; } }
+.paper-foot { text-align: center; padding: 10px 0 30px; }
+@media (max-width: 640px) {
+  .paper { padding-top: 26px; }
+  .pt { font-size: 12.5px; }
+  .pt th, .pt td { padding: 7px 8px; }
+  .formula { white-space: normal; }
+}

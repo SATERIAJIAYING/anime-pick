@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>口碑实验室 · AnimePick 统计</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="stats.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="../index.html">
+      <span class="brand-icon">🎬</span>
+      <span class="brand-text">Anime<span class="grad">Pick</span></span>
+      <span class="brand-jp">アニメ・ピック</span>
+    </a>
+    <nav class="nav-links">
+      <a href="../index.html">开始测试</a>
+      <a href="../discover.html">💘 发现</a>
+      <a href="../methods.html">方法</a>
+      <a href="index.html">统计</a>
+      <a href="https://sateriajiaying.github.io/anime-gallery/" target="_blank" rel="noopener">🌸 画廊</a>
+    </nav>
+  </header>
+
+  <main class="stats-wrap">
+    <div class="stats-head">
+      <p class="kicker">✦ REPUTATION ✦</p>
+      <h1>口碑实验室</h1>
+      <p class="sub">把「平均分」拆开看:有多少人疯狂爱上?有多少人恨?好评是不是虚高?</p>
+    </div>
+    <div class="back-row">
+      <a href="index.html">统计中心</a>
+      <a href="map.html">口味地图</a>
+      <a href="pairs.html">意外动画对</a>
+      <a href="reputation.html" class="on">口碑实验室</a>
+      <a href="groups.html">64 类观众群</a>
+      <a href="eras.html">年代与载体</a>
+      <a href="meta.html">数据自画像</a>
+    </div>
+
+    <div class="glossary"><b>名词解释:</b><b>超喜欢率</b> = 全部评分中打 9-10 分的占比(「疯狂爱上」的比例)。<b>两极分化度</b> = 2 × min(差评分占比, 超喜欢占比)——必须「又有人恨又有人爱」才算两极;全是好评的动画此项为 0。<b>平均分</b> = 1-10 分评分的均值。<b>全站热度</b> = wiki 归档里的「评分人数 + 收藏数」合成值。<b>遗珠</b> = 热度低但超喜欢率高的作品;<b>好评但不动心</b> = 均分高但几乎没人打 9-10 分的作品。</div>
+
+    <div class="mod">
+      <div class="mod-title">
+        <h2>爱恨分明榜</h2>
+        <span class="desc">两极分化度 =(1-4 分 + 9-10 分)占比,评分人数 ≥30</span>
+      </div>
+      <div class="chart-box" style="height:420px"><canvas id="c-lovehate"></canvas></div>
+      <p class="note">榜首类作品通常是「话题性极强、结局/风格引发站队」的番——它们不是平庸,是敢冒犯。</p>
+    </div>
+
+    <div class="mod">
+      <div class="mod-title">
+        <h2>评分 × 超喜欢率 象限</h2>
+        <span class="desc">横轴平均分,纵轴「给 9-10 分的人占比」。右上=公认神作;右下=好评但不动心;左上=小众邪典。</span>
+      </div>
+      <div class="chart-box tall"><canvas id="c-quad"></canvas></div>
+    </div>
+
+    <div class="mod">
+      <div class="mod-title">
+        <h2>热度溢价</h2>
+        <span class="desc">横轴全站热度(对数),纵轴平均分。左上=冷门高分「遗珠」;右下=热门低分「德不配位」。</span>
+      </div>
+      <div class="chart-box tall"><canvas id="c-heat"></canvas></div>
+    </div>
+
+    <div class="mod">
+      <div class="list-title">💤 好评但不动心(平均分 ≥7.6 且超喜欢率最低)</div>
+      <div id="dull-list"></div>
+      <div class="list-title">💎 遗珠(超喜欢率 ≥22% 且全站热度最低)</div>
+      <div id="gem-list"></div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="stats.js"></script>
+  <script>
+    STATS.then((s) => {
+      mkBar("c-lovehate", s.loveHate.map((x) => x.name), s.loveHate.map((x) => x.bimodality), {
+        horizontal: true, color: PALETTE[6],
+        tooltip: (c) => `${c.raw * 100}% 的评分落在极端区间`,
+      });
+      const rep = s.reputation.filter((x) => x.n >= 30);
+      mkScatter("c-quad", rep.map((x) => ({
+        x: x.mean, y: x.superRate,
+        label: `${x.name}\n均分 ${x.mean} · 超喜欢率 ${(x.superRate * 100).toFixed(1)}% · ${x.n} 人评`,
+      })), {
+        xTitle: "平均分", yTitle: "超喜欢率(9-10分占比)",
+        tooltip: (c) => c.raw.label,
+      });
+      mkScatter("c-heat", rep.map((x) => ({
+        x: Math.log10(x.pop + 1), y: x.mean,
+        label: `${x.name}\n热度 ${x.pop} · 均分 ${x.mean} · 超喜欢率 ${(x.superRate * 100).toFixed(1)}%`,
+      })), {
+        xTitle: "全站热度 log10", yTitle: "平均分",
+        tooltip: (c) => c.raw.label,
+      });
+      barList(document.getElementById("dull-list"), s.dull,
+        (x) => (0.2 - x.superRate),
+        (x) => x.name,
+        (x) => `均分 ${x.mean} · 超喜欢率仅 ${(x.superRate * 100).toFixed(0)}%`);
+      barList(document.getElementById("gem-list"), s.hiddenGem,
+        (x) => x.superRate,
+        (x) => x.name,
+        (x) => `超喜欢率 ${(x.superRate * 100).toFixed(0)}% · 热度 ${x.pop}`);
+    });
+  </script>
+</body>
+</html>

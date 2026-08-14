@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>64 类观众群 · AnimePick 统计</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👥</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="stats.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="../index.html">
+      <span class="brand-icon">🎬</span>
+      <span class="brand-text">Anime<span class="grad">Pick</span></span>
+      <span class="brand-jp">アニメ・ピック</span>
+    </a>
+    <nav class="nav-links">
+      <a href="../index.html">开始测试</a>
+      <a href="../discover.html">💘 发现</a>
+      <a href="../methods.html">方法</a>
+      <a href="index.html">统计</a>
+      <a href="https://sateriajiaying.github.io/anime-gallery/" target="_blank" rel="noopener">🌸 画廊</a>
+    </nav>
+  </header>
+
+  <main class="stats-wrap">
+    <div class="stats-head">
+      <p class="kicker">✦ AUDIENCES ✦</p>
+      <h1>64 类观众群</h1>
+      <p class="sub">对 1,442 位用户的「口味坐标」做 k-means 聚出的 64 类人。点击卡片展开:该群体相对全体的偏好差异(lift 越大越突出)。</p>
+    </div>
+    <div class="back-row">
+      <a href="index.html">统计中心</a>
+      <a href="map.html">口味地图</a>
+      <a href="pairs.html">意外动画对</a>
+      <a href="reputation.html">口碑实验室</a>
+      <a href="groups.html" class="on">64 类观众群</a>
+      <a href="eras.html">年代与载体</a>
+      <a href="meta.html">数据自画像</a>
+    </div>
+
+    <div class="glossary"><b>名词解释:</b><b>观众群</b> = 对 1,442 位用户的口味向量做 k-means 聚类得到的 64 类人。<b>心头好</b> = 该群体偏好最强的 3 部动画。<b>lift</b> = 该群体喜欢的条目里出现某标签的频率 ÷ 全体条目里该标签的频率;大于 1 表示「这群人比平均更偏爱这个标签」,数值越大越突出。<b>差异标签</b> = 按 lift 排序、过滤泛化标签后留下的前 6 个。</div>
+
+    <div class="mod">
+      <div class="group-grid" id="group-grid"></div>
+    </div>
+  </main>
+
+  <script src="stats.js"></script>
+  <script>
+    STATS.then((s) => {
+      const grid = document.getElementById("group-grid");
+      const groups = [...s.groups].sort((a, b) => b.size - a.size);
+      for (const g of groups) {
+        const card = el("div", "group-card");
+        const head = el("div", "ghead");
+        head.appendChild(el("span", "gname", `「${g.name}」`));
+        head.appendChild(el("span", "gsize", `观众群 ${g.k + 1} · ${g.size} 人`));
+        card.appendChild(head);
+        card.appendChild(el("div", "gloves", "心头好:" + (g.loves.join("、") || "—")));
+        const diff = el("div", "gdiff");
+        diff.appendChild(el("span", "glabel", "❤️ 更偏爱"));
+        for (const d of g.diffTags) {
+          const sp = el("span");
+          sp.appendChild(document.createTextNode(d.tag + " "));
+          sp.appendChild(el("b", null, `×${d.lift}`));
+          diff.appendChild(sp);
+        }
+        if (g.avoidTags && g.avoidTags.length) {
+          diff.appendChild(el("span", "glabel", "💤 相对无感"));
+          for (const d of g.avoidTags) {
+            const sp = el("span");
+            sp.appendChild(document.createTextNode(d.tag + " "));
+            sp.appendChild(el("b", null, `×${d.lift}`));
+            diff.appendChild(sp);
+          }
+        }
+        card.appendChild(diff);
+        card.onclick = () => card.classList.toggle("open");
+        grid.appendChild(card);
+      }
+    });
+  </script>
+</body>
+</html>

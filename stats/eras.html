@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>年代与载体 · AnimePick 统计</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕰️</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="stats.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="../index.html">
+      <span class="brand-icon">🎬</span>
+      <span class="brand-text">Anime<span class="grad">Pick</span></span>
+      <span class="brand-jp">アニメ・ピック</span>
+    </a>
+    <nav class="nav-links">
+      <a href="../index.html">开始测试</a>
+      <a href="../discover.html">💘 发现</a>
+      <a href="../methods.html">方法</a>
+      <a href="index.html">统计</a>
+      <a href="https://sateriajiaying.github.io/anime-gallery/" target="_blank" rel="noopener">🌸 画廊</a>
+    </nav>
+  </header>
+
+  <main class="stats-wrap">
+    <div class="stats-head">
+      <p class="kicker">✦ TIME ✦</p>
+      <h1>年代与载体</h1>
+      <p class="sub">时间会美化记忆吗?不同载体的观众自选择有多强?长系列从哪部入坑最多?</p>
+    </div>
+    <div class="back-row">
+      <a href="index.html">统计中心</a>
+      <a href="map.html">口味地图</a>
+      <a href="pairs.html">意外动画对</a>
+      <a href="reputation.html">口碑实验室</a>
+      <a href="groups.html">64 类观众群</a>
+      <a href="eras.html" class="on">年代与载体</a>
+      <a href="meta.html">数据自画像</a>
+    </div>
+
+    <div class="glossary"><b>名词解释:</b><b>平均分</b> = 该年代动画的评分均值(按评分人数加权)。<b>超喜欢率</b> = 9-10 分占比。<b>怀旧溢价</b> = 老番平均分系统性偏高——部分原因是「能活到今天还被补番的老作品」本身经过了时间筛选(幸存者偏差),并非年代本身更好。<b>入坑点</b> = 系列内被最多人收藏的那一作。</div>
+
+    <div class="mod">
+      <div class="mod-title">
+        <h2>怀旧溢价</h2>
+        <span class="desc">各年代播出动画的平均分(评分人数加权)。1960s 9.23 → 2020s 6.79 的滑坡几乎单调。</span>
+      </div>
+      <div class="chart-box" style="height:320px"><canvas id="c-era"></canvas></div>
+      <p class="note">注意因果:能活到今天还被补番的老作品,本身经过了时间的筛选(幸存者偏差);新番则全量暴露在评分下。</p>
+    </div>
+
+    <div class="mod">
+      <div class="mod-title">
+        <h2>超喜欢率 × 年代</h2>
+        <span class="desc">各年代 9-10 分占比——老番不只是「分高」,还更容易被深爱。</span>
+      </div>
+      <div class="chart-box" style="height:300px"><canvas id="c-era-super"></canvas></div>
+    </div>
+
+    <div class="mod">
+      <div class="mod-title">
+        <h2>载体差异</h2>
+        <span class="desc">TV / 剧场版 / WEB / OVA 的平均分。剧场版与 OVA 的观众自选择(专程去看)推高了分数。</span>
+      </div>
+      <div class="chart-box" style="height:300px"><canvas id="c-plat"></canvas></div>
+    </div>
+
+    <div class="mod">
+      <div class="mod-title">
+        <h2>入坑点</h2>
+        <span class="desc">多成员系列里,被收藏最多的那一部——大家都是从哪部「入坑」的。</span>
+      </div>
+      <div id="entry-list"></div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="stats.js"></script>
+  <script>
+    STATS.then((s) => {
+      mkBar("c-era", s.eras.map((e) => e.decade), s.eras.map((e) => e.mean), {
+        color: PALETTE[1], tooltip: (c) => `均分 ${c.raw} · ${s.eras[c.dataIndex].n} 条评分`,
+      });
+      mkBar("c-era-super", s.eras.map((e) => e.decade), s.eras.map((e) => e.superRate), {
+        color: PALETTE[0], tooltip: (c) => `超喜欢率 ${(c.raw * 100).toFixed(1)}%`,
+      });
+      mkBar("c-plat", s.platforms.map((p) => p.platform), s.platforms.map((p) => p.mean), {
+        color: PALETTE[4], tooltip: (c) => `均分 ${c.raw} · ${s.platforms[c.dataIndex].n} 条评分`,
+      });
+      barList(document.getElementById("entry-list"), s.entries,
+        (e) => e.count, (e) => `${e.franchise} → ${e.entry}`,
+        (e) => `${e.count} 人收藏`);
+    });
+  </script>
+</body>
+</html>

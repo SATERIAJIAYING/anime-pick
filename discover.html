@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>发现 · AnimePick</title>
+  <meta name="description" content="选一部让你心动(dokidoki kirakira)的番,从口味坐标、共同深爱、标签、同好观众四个维度推荐下一部。" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💘</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://lain.bgm.tv" />
+  <link rel="preconnect" href="https://api.bgm.tv" />
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/discover.css" />
+</head>
+<body>
+  <canvas id="petals" aria-hidden="true"></canvas>
+  <header class="nav">
+    <a class="brand" href="index.html">
+      <span class="brand-icon">🎬</span>
+      <span class="brand-text">Anime<span class="grad">Pick</span></span>
+      <span class="brand-jp">アニメ・ピック</span>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html">开始测试</a>
+      <a href="discover.html">💘 发现</a>
+      <a href="stats/index.html">统计</a>
+      <a href="methods.html">方法</a>
+      <a href="https://sateriajiaying.github.io/anime-gallery/" target="_blank" rel="noopener">🌸 画廊</a>
+    </nav>
+  </header>
+
+  <main class="disc-wrap">
+    <div class="disc-head">
+      <p class="kicker">✦ DISCOVER ✦</p>
+      <h1>从一部「心头好」出发</h1>
+      <p class="sub">选一部最近让你 <b>dokidoki kirakira</b>(怦然心动、特别对胃口)的番,从四个维度帮你找下一部。</p>
+    </div>
+
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input id="q" type="text" placeholder="输入番名搜索(如:孤独摇滚 / 芙莉莲 / MyGO)…" autocomplete="off" />
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="sr" id="sr" hidden></div>
+
+    <div class="seed-panel" id="seed-panel" hidden></div>
+
+    <div id="results" hidden>
+      <div class="dim" id="dim-all"></div>
+      <div class="dim-grid">
+        <div class="dim" id="dim-emb"></div>
+        <div class="dim" id="dim-co"></div>
+        <div class="dim" id="dim-tag"></div>
+        <div class="dim" id="dim-proto"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/discover.js"></script>
+</body>
+</html>

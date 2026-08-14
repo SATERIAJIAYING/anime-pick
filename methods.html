@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Methods · AnimePick 方法与材料</title>
+  <meta name="description" content="AnimePick 的方法与材料:数据来源、模型、提问策略、评估与复现指南。" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📜</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/methods.css" />
+</head>
+<body>
+  <nav class="toc" id="toc">
+  <div class="toc-title">目录</div>
+      <a class="toc-link" href="#摘要">摘要</a>
+      <a class="toc-link" href="#1-材料(Materials)">1 材料(Materials)</a>
+      <a class="toc-link" href="#2-方法(Methods)">2 方法(Methods)</a>
+      <a class="toc-link" href="#3-局限(Limitations)">3 局限(Limitations)</a>
+      <a class="toc-link" href="#4-复现指南(Reproducibility)">4 复现指南(Reproducibility)</a>
+      <a class="toc-link" href="#5-致谢(Acknowledgments)">5 致谢(Acknowledgments)</a>
+      <a class="toc-link" href="#6-参考文献与数据来源">6 参考文献与数据来源</a>
+</nav>
+  <header class="nav">
+    <a class="brand" href="index.html">
+      <span class="brand-icon">🎬</span>
+      <span class="brand-text">Anime<span class="grad">Pick</span></span>
+      <span class="brand-jp">アニメ・ピック</span>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html">开始测试 <span class="jp">Start</span></a>
+      <a href="discover.html">💘 发现 <span class="jp">Discover</span></a>
+      <a href="stats/index.html">统计 <span class="jp">Stats</span></a>
+      <a href="methods.html">方法 <span class="jp">Methods</span></a>
+      <a href="https://sateriajiaying.github.io/anime-gallery/" target="_blank" rel="noopener">🌸 画廊</a>
+    </nav>
+  </header>
+
+  <main class="paper">
+    <header class="paper-head">
+      <p class="paper-kicker">AnimePick · 方法与材料</p>
+      <h1>一个纯前端的交互式动画推荐系统:<br />数据、模型与评估</h1>
+      <p class="paper-authors">方法页 · 版本 2026-08 · 全部计算在浏览器本地完成</p>
+    </header>
+
+    <section class="paper-sec">
+      <h2 id="摘要">摘要</h2>
+      <p>
+        AnimePick 通过「20 部锚点勾选 + 10~40 轮主动问答」在冷启动条件下推断用户的动画口味,输出分层推荐与兴趣画像。
+        系统由离线管线与纯前端推理两部分构成:离线侧以 Bangumi 番组计划为语料(条目元数据 28,153 条、用户收藏评分 306,368 条),
+        训练 64 维隐因子模型、64 个「品味原型」与一张「超喜欢共现图」,量化后打包为约 1.5 MB 静态数据;前端在浏览器内完成
+        画像构建、主动提问与推荐打分,不上传任何用户数据。
+      </p>
+      <p class="paper-note">
+        <b>给不了解机器学习的读者:</b>本文所有方法都会先用一两句大白话解释,再用「地图」「人群」「购物篮」这类日常比喻辅助理解,
+        最后才给出技术细节。你不需要任何统计或编程背景也能读懂;想复现的人可以直接跳到第 4 节。
+      </p>
+    </section>
+
+    <section class="paper-sec">
+      <h2 id="1-材料(Materials)">1 材料(Materials)</h2>
+
+      <h3>1.1 条目元数据:Bangumi wiki 公共归档</h3>
+      <p>
+        动画条目的名称、标签、平台、评分等元数据来自 Bangumi 官方
+        <a class="link" href="https://github.com/bangumi/Archive" target="_blank" rel="noopener">Wiki Data Public Archive</a>
+        (每周三更新;本项目使用 2026-08-11 快照,zip 432 MB,sha256 d1f6865e…)。该归档包含 678,940 条 wiki 条目,
+        本项目保留其中 <b>type=2(动画)且非 R18</b> 的 <b>28,153 条</b>。使用字段如下:
+      </p>
+      <table class="pt">
+        <tr><th>字段</th><th>用途</th></tr>
+        <tr><td>name / name_cn / date / platform</td><td>展示、年份、「新番/老番」判定</td></tr>
+        <tr><td>tags、meta_tags</td><td>内容特征、兴趣画像与推荐理由</td></tr>
+        <tr><td>score / rank</td><td>展示对照(不直接进模型)</td></tr>
+        <tr><td>favorite、score_details(各档评分人数)</td><td>合成全站热度 popularity 先验</td></tr>
+        <tr><td>subject-relations(关联表)</td><td>系列归并(见 1.3)</td></tr>
+      </table>
+
+      <h3>1.2 用户评分语料:官方 API 爬取</h3>
+      <p>
+        评分语料通过 <a class="link" href="https://bangumi.github.io/api/" target="_blank" rel="noopener">Bangumi 官方 v0 API</a> 采集:
+        先由 204 部热门动画的「收藏页」枚举用户(每部 3 页),再逐用户拉取收藏列表(含 1-10 分显式评分,每用户最多 600 条)。
+        爬取限速 ~1 请求/秒、分片并行、断点续爬、失败重试。共获得 <b>306,368 条评分</b>(去重后),来自 <b>2,021 名用户</b>。
+        纳入训练的标准:用户 ≥10 条、条目 ≥15 条(系列归并后,见 1.3)。
+      </p>
+      <table class="pt">
+        <tr><th>评分档</th><th>条数</th><th>占比</th><th>在本系统中的语义</th></tr>
+        <tr><td>9-10</td><td>39,808</td><td>14.5%</td><td>💖 超喜欢(核心信号)</td></tr>
+        <tr><td>7-8</td><td>150,481</td><td>54.9%</td><td>👍 喜欢</td></tr>
+        <tr><td>5-6</td><td>68,627</td><td>25.0%</td><td>😐 一般</td></tr>
+        <tr><td>1-4</td><td>14,409</td><td>5.3%</td><td>👎 不喜欢</td></tr>
+      </table>
+      <p class="paper-note">
+        <b>值得注意:</b>6-8 分的「泛喜欢」区间占近八成——这正是「好动画大家都喜欢」的共识信号;而最有个性的 9-10 分仅占 14.5%。
+        本系统的多项设计(超喜欢档位、共现图、争议度提问)都是为了从这少数强信号里提取个性化。
+      </p>
+
+      <h3>1.3 系列归并(Franchise Collapse)</h3>
+      <p>
+        系列作品(如《Fate》正传/前传/剧场版)共享世界观与观众,分开处理会导致「同一系列占据多个推荐位」并稀释信号。
+        依据归档中的条目关联表,对关系类型 <b>{前传, 续集, 总集篇, 全集, 番外篇, 主线故事}</b> 做并查集(union-find)归并
+        (刻意排除「改编」「相同世界观」「不同演绎」等不应合并的关系)。28,153 个条目归并为 19,365 个系列;
+        系列级评分为用户在该系列内所有条目的最高分,元数据取全站热度最高的成员为代表条目。最终训练池为 <b>1,559 个系列</b>。
+      </p>
+
+      <h3>1.4 同好短评</h3>
+      <p>
+        为每个系列抓取其代表条目短评页的前若干评论,仅保留作者<b>给该条目打 ≥8 分</b>的评论(每系列最多 2 条,截断 90 字),
+        用于推荐卡片的解释性展示。评论仅保留正文与昵称,不携带用户标识。
+      </p>
+
+      <h3>1.5 伦理、许可与隐私</h3>
+      <p>
+        数据均来自 Bangumi 的公开页面与官方接口;发布物只包含<b>聚合后的模型</b>(隐向量、原型、共现图、统计量),
+        不包含任何单个用户的原始评分或身份信息。站点不使用 Cookie、不上传数据、无后端。
+      </p>
+    </section>
+
+    <section class="paper-sec">
+      <h2 id="2-方法(Methods)">2 方法(Methods)</h2>
+
+      <h3>2.0 管线总览</h3>
+      <div class="pipeline">
+        <div class="pstep">评分矩阵<br /><small>1,442 用户 × 1,559 系列</small></div>
+        <span class="parrow">→</span>
+        <div class="pstep">隐因子模型<br /><small>64 维(BPR 排序目标)</small></div>
+        <span class="parrow">→</span>
+        <div class="pstep">品味原型<br /><small>64 类(k-means)</small></div>
+        <span class="parrow">→</span>
+        <div class="pstep">超喜欢共现图<br /><small>Jaccard Top-20</small></div>
+        <span class="parrow">→</span>
+        <div class="pstep">int8 量化<br /><small>≈1.5 MB 静态数据</small></div>
+        <span class="parrow">→</span>
+        <div class="pstep">浏览器推理<br /><small>画像 + 提问 + 推荐</small></div>
+      </div>
+
+      <h3>2.1 隐因子模型(矩阵分解)</h3>
+      <p>
+        <b>大白话:</b>我们手里有一张巨大的表:每一行是一个用户,每一列是一部动画,格子里是评分(大部分是空的)。
+        我们的任务是「猜出空格子」。做法是把这张大表拆成两张小表相乘——一张描述「每个用户的口味」,
+        一张描述「每部动画的特点」,各用 <b>64 个隐藏数字</b>表示。
+      </p>
+      <p>
+        <b>日常比喻:</b>就像把每部动画放进一张<b>64 维的「口味地图」</b>——口味相近的动画落得近,你的口味也在这张地图上有一个点,
+        离你近的动画就是你可能喜欢的。这 64 个维度是算法自己学出来的,不必有名字
+        (可能大致对应「热血程度」「治愈程度」「悬疑浓度」之类,但没人规定)。你和一部动画的距离,用两者的 64 个数字做「点积」算出,
+        数值越大代表越合口味。
+      </p>
+      <p><b>两个训练目标(分工不同):</b></p>
+      <ul>
+        <li><b>BPR(Bayesian Personalized Ranking)</b>——负责最终排序。大白话:它不要求猜准「你会打几分」,只要求猜对「A 和 B 你更喜欢哪个」;只学相对次序。正样本为喜欢/超喜欢,负样本为不喜欢,无负样本的用户以热门条目作代理负样本。SGD 20 轮、学习率 0.05、正则 0.01。</li>
+        <li><b>显式 ALS(交替最小二乘)</b>——只负责「提问」阶段(见 2.5)。它拟合权重化评分(超喜欢 1.5 / 喜欢 1.0 / 一般 0.3 / 不喜欢 −0.8 / 看过未评 0.15),几何性质更适合做探索。</li>
+      </ul>
+      <p>
+        两者各导出一份 64 维嵌入(int8 量化,各 100 KB)。离线评估(见 2.7)表明:「ALS 提问 + BPR 排序」的组合
+        在主动问答协议下优于任一单模型。
+      </p>
+
+      <h3>2.2 品味原型(用户聚类)</h3>
+      <p>
+        <b>大白话:</b>把成千上万用户的「口味坐标」自动分成 <b>64 个典型人群</b>——就像书店把读者分成
+        「科幻迷」「推理迷」「治愈系爱好者」。每一类取一个代表坐标,并自动标出这类人最爱的 3 部动画作名字
+        (所以你会看到「观众群 7 · 63% 像你,心头好:…」)。推荐时,「最像你的几类人」的偏好会被加权并入打分(占 35%)。
+      </p>
+
+      <h3>2.3 超喜欢共现图(强信号协同过滤)</h3>
+      <p>
+        <b>大白话 + 购物篮比喻:</b>如果很多人在《A》和《B》上都打了 9-10 分,那《A》《B》就是一对「常被一起深爱」的动画
+        (类似超市里「买了 A 的人也常买 B」)。我们统计所有满分用户的两两组合,按 Jaccard 系数
+        <i>J = |A∩B| / |A∪B|</i> 打分(共现 ≥2 次才保留),每部动画只留最强的 20 个邻居。
+        你在问答中点过的每一个「超喜欢」,都会沿这张网络向外扩散出候选——这正是「和我口味一样的人还深爱什么」的机器实现。
+        1,361 名用户贡献了 863 个带边的条目。
+      </p>
+
+      <h3>2.4 量化与前端部署</h3>
+      <p>
+        所有模型产物以 int8 逐维量化(每维记录 min/max)存储:条目嵌入 100 KB、提问嵌入 100 KB、原型 4 KB、
+        共现图 234 KB、条目元数据 659 KB、短评约 0.4 MB,合计约 1.5 MB。前端以 ArrayBuffer 加载并按
+        <i>v = lo + span · q/255</i> 反量化,全部计算为 64 维点积,单次全池打分在毫秒级。
+      </p>
+
+      <h3>2.5 提问策略(主动学习)</h3>
+      <p>
+        <b>大白话:</b>问答阶段的每一题都要「问到点子上」。想想问卷设计:问「大家公认的神作你喜不喜欢」没意义——
+        答案几乎都一样,区分不出你是谁;要问<b>「有人狂赞、有人狂喷」的争议作品</b>,你的一个回答就能把你归到某一类人里。
+        同时避免连续问同一类型的题(会烦,信息也重复)。每轮从候选池(评分人数 ≥80、未问过、非锚点)中按下面公式选一部:
+      </p>
+      <div class="formula">pick = argmax [ 相关度(ALS空间) − 0.45×最大相似度 + 0.12×争议度 + 0.05×log热度 ]</div>
+      <ul>
+        <li><b>相关度</b>:该动画与你当前画像的余弦相似度(离你「口味地图」上的点越近越优先);</li>
+        <li><b>多样性惩罚(MMR,λ=0.45)</b>:与已问条目太像的会被压低——避免「口味地图」上只逛一个街区;</li>
+        <li><b>争议度先验</b>:优先问「评分方差大、能区分人群」的条目(评分标准差做经验贝叶斯收缩:(n·σ+8·σ̄)/(n+8));</li>
+        <li><b>热度先验(弱)</b>:略偏向你更可能看过的条目,提高有效回答率。</li>
+      </ul>
+      <p><b>自适应轮数:</b>默认目标 25 轮,依据行为动态调整——「没看过/没兴趣」占比 ≥40%(萌新)收短至 12 轮;≤15%(老司机)延长至 40 轮;每题耗时中位数 &gt;5s(犹豫)提前收尾,&lt;2.5s(秒答)延长(前 3 题不计时,避免阅读规则期误判)。「没看过」不消耗轮次;用户可随时提前结束。</p>
+      <p class="paper-note">
+        <b>已测试而未采用:</b>Thompson 采样 bandit(24 个兴趣簇作摇臂,Beta 后验)。离线评估中 10-20 轮内劣于现行 MMR+争议度、
+        30 轮持平——提问预算(≤40)不足以让后验收敛,故保留 MMR 方案,bandit 实现留档备查。
+      </p>
+
+      <h3>2.6 推荐打分</h3>
+      <div class="formula">score(i) = 0.5 · [ 0.55·cos(p, vᵢ) + 0.35·cos(p', vᵢ) + 0.05·log₁₀(popᵢ+1) ] + 0.5 · co(i)</div>
+      <p>
+        <b>大白话:</b>给每部候选动画打一个综合分,由四部分加权而成——①「你自己的口味点」离它近不近(占大头);
+        ②「最像你的几类观众」喜不喜欢它;③它本身热不热门(小权重,防止整页都是没人看过的冷门);④它是不是你「超喜欢」动画的
+        「常被一起深爱」邻居。其中 p 为你的画像向量(锚点 0.4 / 超喜欢 1.5 / 喜欢 1.0 / 一般 0.3 / 没兴趣 −0.4 / 不喜欢 −0.8 的加权和),
+        p′ 为相似观众群加权向量,co(i) 为共现图得分。
+      </p>
+      <p>
+        推荐列表排除所有「看过」(锚点勾选 + 问答给过反馈 + 结果页手动标记),按全站热度分层:
+        <b>热门精选 3 部 + 小众之选 5 部</b>,每组内同一兴趣簇最多 2 部;每张卡附推荐理由(共现溯源或标签契合)。
+      </p>
+
+      <h3>2.7 评估协议与结果</h3>
+      <p><b>协议(冷启动留出法):</b>随机留出 20% 用户;对每个留出用户,取 ≤5 条「评分 ≥5」的条目作种子构建画像,
+        以其余条目中评分 ≥9(超喜欢)者为命中目标,排除种子后计算 Top-10 命中率(Hit@10)与折损累积增益(nDCG@10);
+        另设<b>产品级仿真</b>:3 部锚点 + N 轮提问,提问揭示该用户真实评分并更新画像,最终榜单同样按「未看过且未评过」约束计算。
+        对照基线:流行度(按评分人数)与随机。</p>
+      <table class="pt">
+        <tr><th>协议</th><th>BPR 排序 + ALS 提问(本系统)</th><th>流行度基线</th><th>随机</th></tr>
+        <tr><td>静态冷启动(5 种子) Hit@10</td><td><b>0.045</b></td><td>0.154</td><td>0.010</td></tr>
+        <tr><td>主动问答 10 轮 Hit@10</td><td>0.165</td><td>0.181</td><td>—</td></tr>
+        <tr><td>主动问答 20 轮 Hit@10</td><td><b>0.199</b></td><td>0.193</td><td>—</td></tr>
+        <tr><td>主动问答 30 轮 nDCG@10</td><td><b>0.247</b></td><td>0.207</td><td>—</td></tr>
+      </table>
+      <p>
+        <b>解读:</b>①以「命中超喜欢(9-10 分)」为目标的难度远高于命中泛喜欢,基线绝对数值普遍偏低;
+        ②主动问答到 20 轮后本系统反超流行度——个性化信号来自问答揭示的强偏好,而非静态冷启动;
+        ③静态协议的差距提示:本系统的价值依赖交互(主动学习),对「不回答只浏览」的场景不成立。
+      </p>
+    </section>
+
+    <section class="paper-sec">
+      <h2 id="3-局限(Limitations)">3 局限(Limitations)</h2>
+      <ul>
+        <li><b>语料偏差:</b>用户来自热门动画收藏页的枚举,口味偏主流;对小众向用户的覆盖不足(评估中「流行度基线偏高」与此有关)。</li>
+        <li><b>单站点:</b>仅用 Bangumi(中文圈)语料;不同文化圈的评分生态(如 MAL)未混入训练(有意为之,见 1.5)。</li>
+        <li><b>系列归并的粒度:</b>关系表会把大型宇宙(如高达 43 部)归为一簇,可能过粗;未做「系列内再分层」。</li>
+        <li><b>评论仅作展示:</b>评论文本未进入模型(方面级情感是可解释性方向,尚未实现)。</li>
+        <li><b>无时间维度:</b>未建模评分时间与口碑变化(如「高开低走」)。</li>
+      </ul>
+    </section>
+
+    <section class="paper-sec">
+      <h2 id="4-复现指南(Reproducibility)">4 复现指南(Reproducibility)</h2>
+      <p>代码与脚本位于项目仓库 <code>recsys/</code> 下(scripts/*.py),全部使用 Python 3 + numpy/scipy。</p>
+      <table class="pt">
+        <tr><th>步骤</th><th>命令</th><th>说明</th></tr>
+        <tr><td>1. 环境</td><td><code>python3 -m venv .venv && pip install numpy scipy</code></td><td>仅 numpy/scipy 两个依赖</td></tr>
+        <tr><td>2. 条目归档</td><td><code>scripts/extract_dump.py</code></td><td>需先将 Archive 最新 dump 存为 <code>data/dump.zip</code></td></tr>
+        <tr><td>3. 系列归并</td><td><code>scripts/build_franchises.py</code></td><td>基于关联表并查集</td></tr>
+        <tr><td>4. 评分爬取</td><td><code>scripts/crawl.py subjects</code> 后分片 <code>scripts/crawl.py ratings --shard s --shard-count N</code></td><td>限速 ~1 req/s,断点续爬</td></tr>
+        <tr><td>5. 训练+评估</td><td><code>scripts/train.py --model bpr --dims 64 --clusters 24</code></td><td>导出 embeddings/原型/共现图并打印评估</td></tr>
+        <tr><td>6. 短评</td><td><code>scripts/fetch_comments.py</code></td><td>可选,纯展示</td></tr>
+        <tr><td>7. 打包</td><td><code>scripts/finalize.py</code></td><td>产出 <code>site/data/</code> 供静态部署</td></tr>
+      </table>
+      <p><b>关键超参数总表:</b></p>
+      <table class="pt">
+        <tr><th>参数</th><th>取值</th></tr>
+        <tr><td>隐维度 d / 条目簇数 / 原型数</td><td>64 / 24 / 64</td></tr>
+        <tr><td>BPR:轮数·学习率·正则</td><td>20 · 0.05 · 0.01</td></tr>
+        <tr><td>ALS:迭代·正则 λ</td><td>6-15 · 0.08</td></tr>
+        <tr><td>反馈权重</td><td>超喜欢 1.5 / 喜欢 1.0 / 一般 0.3 / 没兴趣 −0.4 / 不喜欢 −0.8 / 锚点 0.4</td></tr>
+        <tr><td>打分</td><td>0.5×(0.55 画像 + 0.35 原型 + 0.05 log热度) + 0.5 共现</td></tr>
+        <tr><td>提问</td><td>MMR λ=0.45 · 争议度 0.12 · 热度 0.05</td></tr>
+        <tr><td>自适应轮数</td><td>基线 25;跳过率 ≥40%→12、≤15%→40;耗时中位 &gt;5s→12、&lt;2.5s→40</td></tr>
+        <tr><td>池筛选</td><td>用户 ≥10 评、系列 ≥15 评、提问候选 ≥80 评</td></tr>
+        <tr><td>共现图</td><td>Jaccard,共现 ≥2,Top-20,仅 9-10 分</td></tr>
+      </table>
+    </section>
+
+    <section class="paper-sec">
+      <h2 id="5-致谢(Acknowledgments)">5 致谢(Acknowledgments)</h2>
+      <div class="ack-box">
+        <img class="ack-img" src="assets/thanks.jpg" alt="DeepSeek-V4-Pro" />
+        <div class="ack-text">
+          <p><b>DeepSeek-V4-Pro</b></p>
+          <p>
+            本项目的全部代码——爬虫、数据管线、矩阵分解与聚类、量化导出、前端页面与本文档——
+            均由开发者 <b>DeepSeek-V4-Pro</b> 编写。
+          </p>
+          <p class="ack-thanks">ありがとう!Thanks for all the code. 🌸</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="paper-sec">
+      <h2 id="6-参考文献与数据来源">6 参考文献与数据来源</h2>
+      <ol class="refs">
+        <li>Bangumi 番组计划 API 文档 — <a class="link" href="https://bangumi.github.io/api/" target="_blank" rel="noopener">bangumi.github.io/api</a></li>
+        <li>Bangumi Wiki Data Public Archive — <a class="link" href="https://github.com/bangumi/Archive" target="_blank" rel="noopener">github.com/bangumi/Archive</a></li>
+        <li>Rendle et al., BPR: Bayesian Personalized Ranking from Implicit Feedback (UAI 2009)</li>
+        <li>Carbonell &amp; Goldstein, The Use of MMR, Diversity-Based Reranking (SIGIR 1998)</li>
+        <li>Schnabel et al., "Who doesn't like dinosaurs?" — Finding and Eliciting Richer Preferences (RecSys 2020)</li>
+      </ol>
+    </section>
+
+    <footer class="paper-foot">
+      <a class="btn btn-primary" href="index.html">🎬 返回测试</a>
+    </footer>
+  </main>
+<script>
+(function () {
+  var links = document.querySelectorAll(".toc-link");
+  if (!links.length || !("IntersectionObserver" in window)) return;
+  var map = {};
+  links.forEach(function (l) { map[l.getAttribute("href").slice(1)] = l; });
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        links.forEach(function (l) { l.classList.remove("on"); });
+        var l = map[e.target.id];
+        if (l) l.classList.add("on");
+      }
+    });
+  }, { rootMargin: "-30% 0px -60% 0px" });
+  Object.keys(map).forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) obs.observe(el);
+  });
+})();
+</script>
+</body>
+</html>

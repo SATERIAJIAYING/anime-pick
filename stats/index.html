@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>统计中心 · AnimePick</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="stats.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="../index.html">
+      <span class="brand-icon">🎬</span>
+      <span class="brand-text">Anime<span class="grad">Pick</span></span>
+      <span class="brand-jp">アニメ・ピック</span>
+    </a>
+    <nav class="nav-links">
+      <a href="../index.html">开始测试</a>
+      <a href="../discover.html">💘 发现</a>
+      <a href="../methods.html">方法</a>
+      <a href="index.html">统计</a>
+      <a href="https://sateriajiaying.github.io/anime-gallery/" target="_blank" rel="noopener">🌸 画廊</a>
+    </nav>
+  </header>
+
+  <main class="stats-wrap">
+    <div class="stats-head">
+      <p class="kicker">✦ DATA · 数据挖掘 ✦</p>
+      <h1>统计中心</h1>
+      <p class="sub" id="pool-line">从 1,442 位 Bangumi 用户的 149,149 条系列评分里,挖出一些有意思的东西。</p>
+    </div>
+
+    <div class="hub-grid">
+      <a class="hub-card" href="map.html">
+        <div class="hico">🗺️</div>
+        <h3>口味地图</h3>
+        <p>把 1,559 个动画系列投影到 2D 平面,看类型疆界与跨界区;叠加 64 个观众群的位置。</p>
+        <span class="hstat">1,559 个系列 · 64 个观众群</span>
+      </a>
+      <a class="hub-card" href="pairs.html">
+        <div class="hico">🤝</div>
+        <h3>意外动画对</h3>
+        <p>「看起来不搭、观众却高度重合」与「标签几乎一样、观众却各爱各的」两类反直觉关系。</p>
+        <span class="hstat">双向挖掘 · 附散点图</span>
+      </a>
+      <a class="hub-card" href="reputation.html">
+        <div class="hico">⚖️</div>
+        <h3>口碑实验室</h3>
+        <p>爱恨分明榜、评分×超喜欢率象限、「好评但不动心」与「遗珠」,还有热度溢价分析。</p>
+        <span class="hstat">4 个视角</span>
+      </a>
+      <a class="hub-card" href="groups.html">
+        <div class="hico">👥</div>
+        <h3>64 类观众群</h3>
+        <p>每一类观众的规模、心头好与差异标签(他们比其他人群更偏爱什么)。</p>
+        <span class="hstat">点击卡片展开细节</span>
+      </a>
+      <a class="hub-card" href="eras.html">
+        <div class="hico">🕰️</div>
+        <h3>年代与载体</h3>
+        <p>怀旧溢价:1960s 平均 9.23 分 vs 2020s 6.79 分;TV/剧场版/OVA 的评分差异;长系列从哪部入坑最多。</p>
+        <span class="hstat">时间与载体维度</span>
+      </a>
+      <a class="hub-card" href="meta.html">
+        <div class="hico">🪞</div>
+        <h3>数据自画像</h3>
+        <p>评分分布、「9 分狂魔 vs 6 分党」的用户评分人格、TOP 标签、最庞大的系列宇宙。</p>
+        <span class="hstat">语料本身长什么样</span>
+      </a>
+    </div>
+
+    <div class="mod">
+      <div class="mod-title"><h2>评分分布</h2><span class="desc">149,149 条系列级评分(1-10)</span></div>
+      <div class="chart-box tall" style="height:300px"><canvas id="c-dist"></canvas></div>
+      <p class="note">6-8 分的「泛喜欢」占近八成,而最有个性的 9-10 分只有 14%——这正是本系统把「超喜欢」单独设档的原因。</p>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="stats.js"></script>
+  <script>
+    STATS.then((s) => {
+      document.getElementById("pool-line").textContent =
+        `从 ${s.pool.users} 位 Bangumi 用户的 ${s.pool.rows.toLocaleString()} 条系列评分、${s.pool.items} 个动画系列里,挖出一些有意思的东西。`;
+      const labels = Object.keys(s.ratingDist);
+      mkBar("c-dist", labels.map((k) => `${k}分`), labels.map((k) => s.ratingDist[k]));
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>意外动画对 · AnimePick 统计</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤝</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="stats.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="../index.html">
+      <span class="brand-icon">🎬</span>
+      <span class="brand-text">Anime<span class="grad">Pick</span></span>
+      <span class="brand-jp">アニメ・ピック</span>
+    </a>
+    <nav class="nav-links">
+      <a href="../index.html">开始测试</a>
+      <a href="../discover.html">💘 发现</a>
+      <a href="../methods.html">方法</a>
+      <a href="index.html">统计</a>
+      <a href="https://sateriajiaying.github.io/anime-gallery/" target="_blank" rel="noopener">🌸 画廊</a>
+    </nav>
+  </header>
+
+  <main class="stats-wrap">
+    <div class="stats-head">
+      <p class="kicker">✦ PAIRS ✦</p>
+      <h1>意外动画对</h1>
+      <p class="sub">两个方向的反直觉发现:标签不搭却共享观众,与标签雷同却各爱各的。</p>
+    </div>
+    <div class="back-row">
+      <a href="index.html">统计中心</a>
+      <a href="map.html">口味地图</a>
+      <a href="pairs.html" class="on">意外动画对</a>
+      <a href="reputation.html">口碑实验室</a>
+      <a href="groups.html">64 类观众群</a>
+      <a href="eras.html">年代与载体</a>
+      <a href="meta.html">数据自画像</a>
+    </div>
+
+    <div class="glossary"><b>名词解释:</b><b>用户重叠</b> = 共同「深爱者」(给两部都打 9-10 分的人)的 Jaccard 系数。<b>标签重叠</b> = 两部番标签集合的 Jaccard 系数(各取前 8 个标签)。<b>意外度</b> = 用户重叠 × (1 − 标签重叠):观众明明高度重合、标签却几乎不搭,重合得越多、标签越不像,意外度越高。散点图中<b>灰色背景 = 共现图全部候选对(共 1 万余对)</b>,彩色高亮 = 意外度 TOP24(且共同深爱 ≥4 人,过滤小样本噪声)。</div>
+
+    <div class="mod">
+      <div class="mod-title">
+        <h2>① 看似不搭,却共享「深爱者」</h2>
+        <span class="desc">灰点为全部候选对;彩色为高亮对(意外度 TOP24)。悬浮彩色点看名字与共享标签。</span>
+      </div>
+      <div class="chart-box tall" style="height:380px"><canvas id="c-pairs"></canvas></div>
+      <div class="list-title">TOP 榜(按「意外度」= 用户重叠 × 标签不重叠 排序)</div>
+      <div id="pair-list"></div>
+    </div>
+
+    <div class="mod">
+      <div class="mod-title">
+        <h2>② 标签几乎一样,观众却各爱各的</h2>
+        <span class="desc">指标:标签 Jaccard ≥ 0.5 但深爱者 Jaccard ≤ 0.08——标签解释不了的口味分歧。</span>
+      </div>
+      <div id="rev-list"></div>
+      <p class="note">典型:京阿尼的《吹响吧!上低音号》与《境界的彼方》,标签高度相似,深爱者却几乎不重叠——说明「标签」之外还有看不见的隐藏维度(叙事气质、时代滤镜……)。</p>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="stats.js"></script>
+  <script>
+    STATS.then((s) => {
+      // 火山图式:灰色背景 = 全部候选对(共现图所有边,共 {s.pairCloud.length} 对),
+      // 彩色高亮 = 意外度 TOP24(共同深爱 ≥4 人)
+      const cloud = s.pairCloud.map(([uj, tj]) => ({ x: uj, y: tj }));
+      const hl = s.pairs.map((p, i) => ({
+        x: p.userOverlap, y: p.tagOverlap, i,
+        label: `${p.a.name} × ${p.b.name}\n共同深爱 ${p.sharedLovers} 人 · ${p.sharedTags.length ? "共享标签:" + p.sharedTags.join("、") : "无重叠标签"}`,
+      }));
+      const ctx = document.getElementById("c-pairs");
+      new Chart(ctx, {
+        type: "scatter",
+        data: {
+          datasets: [
+            { label: "all", data: cloud, backgroundColor: "rgba(167,176,214,.18)",
+              pointRadius: 1.6, pointHitRadius: 0, pointHoverRadius: 0 },
+            { label: "top", data: hl, backgroundColor: hl.map((p) => PALETTE[p.i % PALETTE.length]),
+              pointRadius: 5, pointHoverRadius: 8, borderColor: "#fff", borderWidth: 0.6 },
+          ],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: (c) => c.raw.label || "" } },
+          },
+          scales: {
+            x: { title: { display: true, text: "用户重叠(Jaccard)", color: "#a7b0d6", font: { size: 12 } },
+                 grid: { color: "rgba(255,255,255,.06)" }, ticks: CHART_DEFAULTS },
+            y: { title: { display: true, text: "标签重叠(Jaccard)", color: "#a7b0d6", font: { size: 12 } },
+                 grid: { color: "rgba(255,255,255,.06)" }, ticks: CHART_DEFAULTS },
+          },
+        },
+      });
+      const tagMeta = (p) => p.sharedTags.length
+        ? `共享标签:${p.sharedTags.join("、")} · 共同深爱 ${p.sharedLovers} 人`
+        : `无重叠标签 · 共同深爱 ${p.sharedLovers} 人`;
+      barList(document.getElementById("pair-list"), s.pairs,
+        (p) => p.surprise,
+        (p) => `${p.a.name} × ${p.b.name}`,
+        tagMeta);
+      barList(document.getElementById("rev-list"), s.reversePairs,
+        (p) => (1 - p.userOverlap),
+        (p) => `${p.a} × ${p.b}`,
+        (p) => `共享标签:${p.sharedTags.join("、")} · 观众重叠仅 ${p.userOverlap} · 共同 ${p.sharedLovers} 人`);
+    });
+  </script>
+</body>
+</html>
